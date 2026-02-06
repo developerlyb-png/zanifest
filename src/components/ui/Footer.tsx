@@ -54,8 +54,7 @@ function Footer() {
             />
           </div>
           <div className={styles.desc}>
-            The Zanifest is India's largest insurance aggregator, and has
-            expanded its operations to the India.
+            The Zanifest insurance broker is India’s Leading insurance broker having its operations Pan India. With customised insurance solutions to dedicated claim assistance team, we offer you a complete peace of mind.
           </div>
           <div className={styles.icons}>
             <FaLinkedin size={40} />
