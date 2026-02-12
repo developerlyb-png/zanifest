@@ -52,6 +52,8 @@ import Doctorinsurancelist from "@/components/superadminsidebar/Doctorinsurancel
 import Officepackagepolicylist from "@/components/superadminsidebar/Officepackagepolicylist";
 import Directorlist from "@/components/superadminsidebar/Directorlist";
 import ReviewApplication from "@/components/superadminsidebar/reviewapplication";
+import ShowResult from "@/components/superadminsidebar/showresult";
+
 
 
 import { useAdmin } from "@/lib/hooks/useAdmin";
@@ -392,7 +394,17 @@ const SuperAdminDashboard = () => {
     <span className={styles.label}>Review Application</span>
   </span>
 </li>
-
+  <li
+  onClick={() => setActiveSection("showResult")}
+  className={`${styles.menuItem} ${
+    activeSection === "showResult" ? styles.activeMenu : ""
+  }`}
+>
+  <span className={styles.iconLabel}>
+    <FiList className={styles.icon} />
+    <span className={styles.label}>Show Result</span>
+  </span>
+</li>
 
             {/* Module*/}
             <p className={styles.sectionTitle}>Module</p>
@@ -527,6 +539,7 @@ const SuperAdminDashboard = () => {
 {activeSection === "officepackagepolicylist" && <Officepackagepolicylist />}
 {activeSection === "directorlist" && <Directorlist />}
 {activeSection === "reviewApplication" && <ReviewApplication />}
+{activeSection === "showResult" && <ShowResult />}
 
 
         </main>

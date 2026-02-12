@@ -302,6 +302,7 @@ export default function ReviewApplications() {
 
             <div className={styles.modalContent}>
               {/* top grid */}
+              
               <div className={styles.grid}>
                    <div className={styles.field}>
   <label>Agent ID</label>
@@ -315,6 +316,19 @@ export default function ReviewApplications() {
 />
 
 </div>
+                <div className={styles.field}>
+  <label>Agent ID</label>
+  <input
+  readOnly
+  value={
+    selected?._id
+      ? `${selected._id.toString().slice(-6)}`
+      : ""
+  }
+/>
+
+</div>
+
                 <div className={styles.field}>
                   <label>First Name</label>
                   <input readOnly value={selected.firstName || ""} />
