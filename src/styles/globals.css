@@ -1,44 +1,11 @@
-/* @import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"); */
-@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+/* ================= GOOGLE FONTS ================= */
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;900&display=swap");
 
+/* ================= ROOT COLORS ================= */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
 
-html,
-body {
-  font-family: "Lato", sans-serif;
-  font-style: normal;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-
-  /* ✅ Allow scrolling normally */
-  /* overflow-y: auto; */
-}
-
-/* ✅ Apply border-box everywhere to avoid width miscalculations */
-*, *::before, *::after {
-  box-sizing: inherit;
-}
-
-/* ✅ Prevent elements from exceeding screen width */
-img, video, iframe {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* ✅ Common fix: avoid 100vw issue */
-.container, section, div {
-  max-width: 100%;
-}
-
-:root{
   --bg:#F5F7FB;
   --white:#fff;
   --border:#E7EEF7;
@@ -53,29 +20,85 @@ img, video, iframe {
   --cta-dark:#ea6405;
   --cta-arrow:#ffffff;
   --violet:#8b5cf6;
-}
 
-:root{
-  --bg: #f7f9fb;
-  --muted: #6b7280;
+  --bg-light: #f7f9fb;
   --accent: #ff5a1f;
   --card-blue-1: #dff4f9;
   --card-blue-2: #cceffa;
 }
 
-/* Typography */
-.text-heading {
-  font-family: "Roboto";
-  font-weight: 900;
+/* ================= GLOBAL RESET ================= */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+
+  /* 🔥 Global Default Font */
+  font-family: "Roboto", sans-serif;
+  font-weight: 400; /* default = description */
+
+  box-sizing: border-box;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+/* ================= MEDIA FIX ================= */
+img,
+video,
+iframe {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.container,
+section,
+div {
+  max-width: 100%;
+}
+
+/* ===================================================== */
+/* 🔥 GLOBAL TYPOGRAPHY SYSTEM (USE EVERYWHERE) */
+/* ===================================================== */
+
+/* ===== HEADING ===== */
+h1,
+h2,
+h3,
+.text-heading {
+  font-family: "Roboto", sans-serif;
+  font-weight: 900;
+  color: var(--text);
+}
+
+/* ===== SUB HEADING ===== */
+h4,
+h5,
 .text-subheading {
-  font-family: "Roboto";
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* ===== DESCRIPTION / PARAGRAPH ===== */
+p,
+span,
+li,
+a,
+.text-description {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  color: var(--text);
+}
+
+/* OPTIONAL: Button text */
+button {
+  font-family: "Roboto", sans-serif;
   font-weight: 500;
 }
-
-.text-description {
-  font-family: "Roboto";
-  font-weight: 400;
-}
-

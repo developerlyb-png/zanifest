@@ -18,7 +18,7 @@ const fileToBase64 = (file: File): Promise<string> =>
   });
 
 export default function HowWorksAdmin() {
-  const { data, error } = useSWR("/api/howworksapi", fetcher);
+  const { data, error } = useSWR("/api/howworksapi?includeImages=true", fetcher);
 
   const [mainHeading, setMainHeading] = useState("");
   const [servicesHeading, setServicesHeading] = useState("");
@@ -147,19 +147,19 @@ export default function HowWorksAdmin() {
             />
             <label>Image</label>
             <input
-              type="file"
-              accept="image/*"
+               type="file"
+  accept="image/png,image/jpeg,image/webp,image/gif"
               onChange={(e) => handleStepImageChange(index, e)}
             />
             {step.image && (
-              <Image
-                src={step.image}
-                alt="Preview"
-                width={100}
-                height={100}
-                className={styles.imagePreview}
-                unoptimized
-              />
+             <img
+  src={step.image}
+  alt="Preview"
+  width={100}
+  height={100}
+  className={styles.imagePreview}
+  style={{ objectFit: "contain" }}
+/>
             )}
             <button onClick={() => handleStepUpdate(index)}>
               Update Step {index + 1}
@@ -188,19 +188,20 @@ export default function HowWorksAdmin() {
             />
             <label>Image</label>
             <input
-              type="file"
-              accept="image/*"
+               type="file"
+  accept="image/png,image/jpeg,image/webp,image/gif"
               onChange={(e) => handleServiceImageChange(index, e)}
             />
             {service.image && (
-              <Image
-                src={service.image}
-                alt="Preview"
-                width={100}
-                height={100}
-                className={styles.imagePreview}
-                unoptimized
-              />
+           <img
+  src={service.image}
+  alt="Preview"
+  width={100}
+  height={100}
+  className={styles.imagePreview}
+  style={{ objectFit: "contain" }}
+/>
+
             )}
             <button onClick={() => handleServiceUpdate(index)}>
               Update Service {index + 1}
