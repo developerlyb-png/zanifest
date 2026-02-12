@@ -14,6 +14,7 @@ type FormDataType = {
   email: string;
   password: string;
   phone: string;
+  profileImage?: string;
   city: string;
   district: string;
   state: string;
@@ -29,6 +30,7 @@ type FormDataType = {
   accountNumber: string;
   ifscCode: string;
   branchLocation: string;
+  
   yearofpassing10th?: string;
   yearofpassing12th?: string;
 };
@@ -129,6 +131,7 @@ const totalSteps = 5;
     email: "",
     password: "",
     phone: "",
+    profileImage: "",
     city: "",
     district: "",
     state: "",
@@ -406,6 +409,7 @@ if (step === 5) {
       "accountHolderName",
       "bankName",
       "accountNumber",
+      
       "ifscCode",
       "branchLocation",
       "yearofpassing10th",
@@ -484,6 +488,30 @@ if (step === 5) {
 
     if (res.ok) setShowSuccess(true);
   };
+
+  /* ================= PROFILE IMAGE HANDLER (ADD THIS) ================= */
+
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+  });
+
+const handleProfileImageChange = async (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const base64 = await fileToBase64(file);
+
+  setFormData((prev) => ({
+    ...prev,
+    profileImage: base64,
+  }));
+};
 
   // only digits helper
   const onlyDigits = (value: string, max: number) =>
@@ -576,7 +604,14 @@ if (step === 5) {
               }
               className={errors.phone ? styles.errorInput : ""}
             />
+                     
+           <input
+    type="file"
+    accept="image/png,image/jpeg,image/webp,image/gif"
+    onChange={handleProfileImageChange}
+  />
 
+                     
             <div className={styles.passwordWrapper}>
               <input
                 id="password"

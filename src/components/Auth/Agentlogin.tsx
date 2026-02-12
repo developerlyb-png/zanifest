@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaSpinner } from "react-icons/fa";
@@ -6,6 +7,7 @@ import styles from "@/styles/components/Auth/Login.module.css";
 import Image from "next/image";
 
 export default function Agentlogin() {
+
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,20 +16,19 @@ export default function Agentlogin() {
 
   const router = useRouter();
 
-  async function onSubmit(event: { preventDefault: () => void }) {
+  // ================= LOGIN SUBMIT =================
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-
-    function getCookie(name: string) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(";").shift();
-    }
+    setError(false);
 
     try {
+
       const res = await fetch("/api/agent/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           email: userName,
           password,
@@ -35,42 +36,22 @@ export default function Agentlogin() {
       });
 
       const data = await res.json();
-      // 🔁 HANDLE BACKEND REDIRECT (🔥 ADD THIS BLOCK)
-      if (data.redirect) {
-        router.replace(data.redirect);
-        return;
-      }
+
       if (!res.ok) {
         setError(true);
         alert(data.message || "Login failed");
         return;
       }
 
-      // ✅ AUTH COOKIE
+      // ✅ SAVE TOKEN COOKIE (VERY IMPORTANT FOR 401 FIX)
       document.cookie = `agentToken=${data.token}; path=/; max-age=86400`;
+
+      // optional local storage
       localStorage.setItem("agentName", data.agent?.name || "");
 
-      // 🔥 NEW: CHECK TRAINING STATUS FROM BACKEND
-      const meRes = await fetch("/api/agent/me", {
-        credentials: "include",
-      });
-      const meData = await meRes.json();
+      // ✅ DIRECT REDIRECT TO AGENT PAGE
+      router.replace("/agentpage");
 
-      if (meData?.agent?.trainingCompleted) {
-        router.replace("/agentpage");
-        return;
-      }
-
-      // 🔥 LOCAL TRAINING CHECK
-      const completed = JSON.parse(
-        localStorage.getItem("training_completed") || "{}"
-      );
-
-      if (Object.keys(completed).length === 3) {
-        router.replace("/videolectures?mode=test");
-      } else {
-        router.replace("/videolectures");
-      }
     } catch (err) {
       console.error("Login failed:", err);
       setError(true);
@@ -81,6 +62,7 @@ export default function Agentlogin() {
 
   return (
     <>
+      {/* ================= LOADER ================= */}
       {loading && (
         <div className={styles.loaderOverlay}>
           <FaSpinner className={styles.loaderIcon} />
@@ -89,6 +71,7 @@ export default function Agentlogin() {
       )}
 
       <div className={styles.cont}>
+        {/* LEFT IMAGE */}
         <div className={styles.left}>
           <Image
             src={require("@/assets/loginbanner.png")}
@@ -97,8 +80,10 @@ export default function Agentlogin() {
           />
         </div>
 
+        {/* LOGIN FORM */}
         <div className={styles.loginCont}>
           <div className={styles.formDiv}>
+
             <div className={styles.logo}>
               <Image
                 src={require("@/assets/logo.png")}
@@ -117,6 +102,7 @@ export default function Agentlogin() {
                 placeholder="E-mail Address"
                 required
                 className={styles.input}
+                value={userName}
                 onChange={(e) => setUserName(e.target.value)}
               />
 
@@ -125,13 +111,14 @@ export default function Agentlogin() {
                 placeholder="Password"
                 required
                 className={styles.input}
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
 
               <label>
                 <input
                   type="checkbox"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onChange={() => setShowPassword(!showPassword)}
                 />{" "}
                 Show Password
               </label>
@@ -143,6 +130,7 @@ export default function Agentlogin() {
               >
                 Login
               </button>
+
               <p className={styles.signupLink}>
                 Don't have an account?{" "}
                 <span
@@ -152,6 +140,7 @@ export default function Agentlogin() {
                   Sign Up
                 </span>
               </p>
+
             </form>
           </div>
         </div>

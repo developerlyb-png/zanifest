@@ -12,7 +12,7 @@ export interface IAgent extends Document {
   email: string;
   password: string;
   phone: string;
-
+  profileImage?: string;
   // Address
   city: string;
   district: string;
@@ -111,7 +111,7 @@ agentCode: { type: String, unique: true, sparse: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phone: { type: String, required: true },
-
+    profileImage: { type: String, default: null },
     // Address
     city: { type: String, required: true },
     district: { type: String, required: true },

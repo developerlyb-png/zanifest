@@ -75,6 +75,7 @@ export default async function handler(
       "lastName",
       "email",
       "password",
+      "profileImage",
       "phone",
 
       // Address
