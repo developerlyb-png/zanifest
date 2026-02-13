@@ -1,32 +1,42 @@
-// pages/api/getallagents.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import dbConnect from '@/lib/dbConnect';
-import Agent from '@/models/Agent';
+import type { NextApiRequest, NextApiResponse } from "next";
+import dbConnect from "@/lib/dbConnect";
+import Agent from "@/models/Agent";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await dbConnect();
+// 🔥 VERY IMPORTANT FOR LIVE SERVER
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+};
 
-  if (req.method === 'GET') {
-    try {
-      const agents = await Agent.find();
-      // console.log("Fetched all agents:", agents);
-      if (!agents || agents.length === 0) {
-        console.log("No agents found");
-        // Return a 404 status if no agents are found
-        return res.status(404).json({ message: 'No agents found :(' });
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
 
-      }
-      return res.status(200).json(agents);
-    } 
-    
-    catch (error) {
-      console.error('Error fetching agents:', error);
-      return res.status(500).json({ message: 'Failed to fetch admins' });
-    }
-  } 
-  else {
-    res.setHeader('Allow', ['GET']);
+  if (req.method !== "GET") {
+    res.setHeader("Allow", ["GET"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-}
 
+  try {
+
+    await dbConnect();
+
+    // ✅ ONLY REQUIRED FIELDS SEND
+    const agents = await Agent.find({})
+      .select("agentCode firstName lastName email status certificate")
+      .limit(50)        // 👈 live proxy safe
+      .lean();          // 👈 remove mongoose heavy object
+
+    if (!agents.length) {
+      return res.status(200).json([]); // 🔥 don't send 404
+    }
+
+    return res.status(200).json(agents);
+
+  } catch (error) {
+    console.error("Error fetching agents:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+}
