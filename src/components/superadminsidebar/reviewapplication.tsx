@@ -316,7 +316,7 @@ export default function ReviewApplications() {
 />
 
 </div>
-                <div className={styles.field}>
+                {/* <div className={styles.field}>
   <label>Agent ID</label>
   <input
   readOnly
@@ -327,7 +327,7 @@ export default function ReviewApplications() {
   }
 />
 
-</div>
+</div> */}
 
                 <div className={styles.field}>
                   <label>First Name</label>

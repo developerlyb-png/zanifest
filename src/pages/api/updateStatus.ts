@@ -15,33 +15,87 @@ export default async function handler(
 
     await dbConnect();
 
-    const { id, status, certificate } = req.body;
+    const { id, status } = req.body;
 
-    let updateData:any = {
-      status,
-      ...(certificate && { certificate })
-    };
-
-    // ================= NEW AGENT CODE GENERATE =================
-    if(status === "approved"){
-
-      // total approved agents count
-      const count = await Agent.countDocuments({ status:"approved" });
-
-      const newAgentCode = `AG-${1000 + count + 1}`;
-
-      updateData.agentCode = newAgentCode;
+    if (!id) {
+      return res.status(400).json({
+        success:false,
+        message:"Agent ID missing"
+      });
     }
 
-    await Agent.findByIdAndUpdate(id, updateData);
+    const agent = await Agent.findById(id);
+
+    if (!agent) {
+      return res.status(404).json({
+        success:false,
+        message:"Agent not found"
+      });
+    }
+
+    let updateData:any = {};
+
+    // ⭐ REVIEWED STATUS
+    if (status === "reviewed") {
+      updateData.status = "reviewed";
+    }
+
+    // ⭐ APPROVED ONLY IF CERTIFICATE EXISTS
+    if (status === "approved") {
+
+      if (!agent.certificate2) {
+        return res.status(400).json({
+          success:false,
+          message:"Generate certificate before approval"
+        });
+      }
+
+      updateData.status = "approved";
+
+      // generate agent code if missing
+      if (!agent.agentCode) {
+
+        const lastAgent = await Agent.findOne({
+          agentCode: { $regex: /^AG-/ }
+        })
+        .sort({ agentCode: -1 })
+        .select("agentCode");
+
+        let nextNumber = 1001;
+
+        if (lastAgent?.agentCode) {
+          const parts = lastAgent.agentCode.split("-");
+          const num = parseInt(parts[1]);
+          if (!isNaN(num)) nextNumber = num + 1;
+        }
+
+        updateData.agentCode = `AG-${nextNumber}`;
+      }
+    }
+
+    // ⭐ REJECT
+    if (status === "rejected") {
+      updateData.status = "rejected";
+    }
+
+    const updated = await Agent.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new:true }
+    );
 
     return res.status(200).json({
       success:true,
-      newCode:updateData.agentCode || null
+      data: updated
     });
 
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ success:false });
+  } catch (error:any) {
+
+    console.log("❌ STATUS UPDATE ERROR:", error);
+
+    return res.status(500).json({
+      success:false,
+      message:error.message
+    });
   }
 }

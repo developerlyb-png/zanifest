@@ -24,7 +24,9 @@ export interface IAgent extends Document {
   panAttachment?: string;
   adhaarNumber?: string;
   adhaarAttachment?: string;
-
+ certificate?: string;
+ certificate1?: string;
+ certificate2?: string;
   // Nominee
   nomineeName?: string;
   nomineeRelation?: string;
@@ -68,7 +70,7 @@ export interface IAgent extends Document {
   }[];
 
   // Status
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "reviewed" | "approved" | "rejected";
   accountStatus: "active" | "inactive";
 
   // 🔥 ADD BELOW status fields (NO REMOVAL)
@@ -186,9 +188,22 @@ twelfthMarksheetAttachment: { type: String, default: null },
     // Status
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "reviewed", "approved", "rejected"],
       default: "pending",
     },
+    certificate: {
+  type: String,
+  default: ""
+},
+certificate1: {
+  type: String,
+  default: ""
+},
+certificate2: {
+  type: String,
+  default: ""
+},
+
 rejectedFields: {
   type: [String],
   default: [],

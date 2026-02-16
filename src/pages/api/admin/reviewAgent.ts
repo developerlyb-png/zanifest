@@ -25,7 +25,7 @@ export default async function handler(
        APPROVE APPLICATION
     ================================================= */
     if (action === "accept") {
-      agent.status = "approved";
+      agent.status = "reviewed";
       agent.assignedTo = assignManager;
 
       // 🔥 clear rejection metadata

@@ -192,9 +192,14 @@ doc.text(`Date: ${today}`, 420, lineY + 5);
 
     await new Promise<void>((resolve) => stream.on("finish", resolve));
 
-    await Agent.findByIdAndUpdate(agentId, {
-      certificate: `/certificates/${fileName}`,
-    });
+ await Agent.findByIdAndUpdate(agentId, {
+  $set: {
+    certificate: `/certificates/${fileName}`,
+    certificate2: `/certificates/${fileName}`
+  }
+});
+
+
 
     return res.status(200).json({
       success: true,

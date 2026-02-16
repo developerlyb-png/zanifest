@@ -2,7 +2,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import Agent from "@/models/Agent";
 
-// 🔥 VERY IMPORTANT FOR LIVE SERVER
 export const config = {
   api: {
     responseLimit: false,
@@ -23,15 +22,10 @@ export default async function handler(
 
     await dbConnect();
 
-    // ✅ ONLY REQUIRED FIELDS SEND
     const agents = await Agent.find({})
-      .select("agentCode firstName lastName email status certificate")
-      .limit(50)        // 👈 live proxy safe
-      .lean();          // 👈 remove mongoose heavy object
-
-    if (!agents.length) {
-      return res.status(200).json([]); // 🔥 don't send 404
-    }
+.select("_id agentCode firstName lastName email status certificate certificate1 certificate2")
+      .limit(0)
+      .lean();
 
     return res.status(200).json(agents);
 
