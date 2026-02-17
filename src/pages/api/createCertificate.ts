@@ -5,6 +5,7 @@ import Agent from "@/models/Agent";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
+import sharp from "sharp";
 
 export default async function handler(
   req: NextApiRequest,
@@ -27,13 +28,10 @@ export default async function handler(
       return res.status(404).json({ message: "Agent not found" });
     }
 
-    // =========================
-    // CREATE FOLDER
-    // =========================
     const dir = path.join(process.cwd(), "public", "certificates");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    const fileName = `${agent.agentCode}.pdf`;
+    const fileName = `${agent.agentCode || "certificate"}.pdf`;
     const filePath = path.join(dir, fileName);
 
     const doc = new PDFDocument({
@@ -44,26 +42,13 @@ export default async function handler(
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // =========================
-    // BORDER
-    // =========================
-    // doc
-    //   .lineWidth(2)
-    //   .strokeColor("#2c6fb7")
-    //   .rect(20, 20, doc.page.width - 40, doc.page.height - 40)
-    //   .stroke();
-
-    // =========================
-    // LOGO (TOP LEFT)
-    // =========================
+    // LOGO
     const logoPath = path.join(process.cwd(), "public/logo.png");
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 40, 30, { width: 120 });
     }
 
-    // =========================
-    // WATERMARK (RIGHT TOP – wa.png)
-    // =========================
+    // WATERMARK
     const watermarkPath = path.join(process.cwd(), "public/wa.png");
     if (fs.existsSync(watermarkPath)) {
       doc.save();
@@ -75,30 +60,62 @@ export default async function handler(
       doc.restore();
     }
 
-    // =========================
     // TITLE
-    // =========================
-    -
     doc
       .font("Helvetica-Bold")
       .fontSize(20)
       .fillColor("#2c6fb7")
       .text("Appointment Letter", 0, 90, { align: "center" });
 
-    // =========================
-    // BODY CONTENT (AUTO Y)
-    // =========================
     doc.font("Helvetica").fontSize(11).fillColor("black");
 
     let y = 135;
+
+    // NAME
+    doc.text(`Mr./Ms. ${agent.firstName} ${agent.lastName}`, 60, y);
+
+    // ⭐ PROFILE IMAGE CIRCLE WITH GRAY BORDER
+    if (agent.profileImage) {
+      try {
+        const base64Data = agent.profileImage.split(",")[1];
+        const imgBuffer = Buffer.from(base64Data, "base64");
+
+        const pngBuffer = await sharp(imgBuffer).png().toBuffer();
+
+        const imgX = doc.page.width - 130;
+        const imgY = 80;
+        const size = 70;
+        const radius = size / 2;
+
+        // Border
+        doc
+          .lineWidth(1)
+          .strokeColor("#999")
+          .circle(imgX + radius, imgY + radius, radius)
+          .stroke();
+
+        // Clip circle
+        doc.save();
+        doc.circle(imgX + radius, imgY + radius, radius).clip();
+
+        // Image
+        doc.image(pngBuffer, imgX, imgY, {
+          width: size,
+          height: size,
+        });
+
+        doc.restore();
+      } catch (err) {
+        console.log("Profile image load error:", err);
+      }
+    }
+
+    y += 30;
 
     const write = (text: string, gap = 18) => {
       doc.text(text, 60, y, { width: 480 });
       y += gap;
     };
-
-    write(`Mr./Ms. ${agent.firstName} ${agent.lastName}`, 16);
-    write(`S/O __________________`, 26);
 
     write(
       "We welcome you to Zanifest Insurance Broker Pvt. Ltd. We are an IRDAI registered Direct (General) insurance broking company, with registration No. 1119.",
@@ -115,8 +132,9 @@ export default async function handler(
       34
     );
 
-    write(`POS Code: ${agent.agentCode}`, 16);
-    write(`Pan No: __________________`, 26);
+    write(`POS Code: ${agent.agentCode || "N/A"}`, 16);
+
+    write(`Pan No: ${agent.panNumber || "N/A"}`, 26);
 
     write(
       "With this letter, we authorize you to work as Point of Sale Person of Zanifest Insurance Broker to market insurance products that are allowed under prescribed guidelines for Non-Life and Health business.",
@@ -133,51 +151,35 @@ export default async function handler(
       36
     );
 
-    // =========================
-    // SIGNATURE POSITION (AUTO FIXED)
-    // =========================
-  // =========================
-// SIGNATURE + STAMP PERFECT ALIGN
-// =========================
+    const lineY = doc.page.height - 210;
 
-// 🔥 line position (reference point)
-const lineY = doc.page.height - 210;
+    const signPath = path.join(process.cwd(), "public/Ca.jpeg");
 
-// ---- 1️⃣ STAMP IMAGE (LINE SE UPAR)
-const signPath = path.join(process.cwd(), "public/Ca.jpeg");
+    if (fs.existsSync(signPath)) {
+      doc.image(signPath, 70, lineY - 130, {
+        width: 140,
+      });
+    }
 
-if (fs.existsSync(signPath)) {
-  doc.image(signPath, 70, lineY - 130, {
-    width: 140,
-  });
-}
+    doc
+      .lineWidth(1)
+      .strokeColor("#2c6fb7")
+      .moveTo(60, lineY)
+      .lineTo(250, lineY)
+      .stroke();
 
-// ---- 2️⃣ SIGNATURE LINE
-doc
-  .lineWidth(1)
-  .strokeColor("#2c6fb7")
-  .moveTo(60, lineY)
-  .lineTo(250, lineY)
-  .stroke();
+    doc
+      .fillColor("black")
+      .fontSize(11)
+      .text(
+        "Authorised Signatory\nZanifest Insurance Broker Pvt. Ltd",
+        60,
+        lineY + 5
+      );
 
-// ---- 3️⃣ SIGNATURE TEXT (LINE KE NICHE)
-doc
-  .fillColor("black")
-  .fontSize(11)
-  .text(
-    "Authorised Signatory\nZanifest Insurance Broker Pvt. Ltd",
-    60,
-    lineY + 5
-  );
+    const today = new Date().toLocaleDateString();
+    doc.text(`Date: ${today}`, 420, lineY + 5);
 
-// ---- 4️⃣ DATE RIGHT SIDE
-const today = new Date().toLocaleDateString();
-doc.text(`Date: ${today}`, 420, lineY + 5);
-
-
-    // =========================
-    // FOOTER (FIXED)
-    // =========================
     doc
       .fontSize(8)
       .fillColor("gray")
@@ -192,14 +194,12 @@ doc.text(`Date: ${today}`, 420, lineY + 5);
 
     await new Promise<void>((resolve) => stream.on("finish", resolve));
 
- await Agent.findByIdAndUpdate(agentId, {
-  $set: {
-    certificate: `/certificates/${fileName}`,
-    certificate2: `/certificates/${fileName}`
-  }
-});
-
-
+    await Agent.findByIdAndUpdate(agentId, {
+      $set: {
+        certificate: `/certificates/${fileName}`,
+        certificate2: `/certificates/${fileName}`,
+      },
+    });
 
     return res.status(200).json({
       success: true,
