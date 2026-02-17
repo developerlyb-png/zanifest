@@ -116,7 +116,8 @@ export default function ShowResult() {
           value={statusFilter}
           onChange={(e)=>{ setStatusFilter(e.target.value); setCurrentPage(1); }}
         >
-          <option value="all">All</option>
+        
+          <option value="all">Select Status</option>
           <option value="reviewed">Reviewed</option>
           <option value="approved">Approved</option>
         </select>

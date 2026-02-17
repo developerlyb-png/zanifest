@@ -436,3 +436,19 @@
   color: #3730a3;
   border: 1px solid #c7d2fe;
 }
+
+.filterBar {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+/* SEARCH 70% */
+.searchInput {
+  width: 50%;
+}
+
+/* BOTH DROPDOWNS SHARE 30% */
+.select {
+  width: 25%;
+}
