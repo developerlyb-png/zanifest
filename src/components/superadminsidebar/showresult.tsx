@@ -16,6 +16,9 @@ export default function ShowResult() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // ⭐ SUCCESS MESSAGE
+  const [successMsg, setSuccessMsg] = useState("");
+
   const loadAgents = async () => {
     const res = await axios.get("/api/getallagents");
     setAgents(res.data || []);
@@ -26,7 +29,6 @@ export default function ShowResult() {
   // ⭐ FINAL APPROVE
   const approveAgent = async () => {
 
-    // 🔥 GET LATEST AGENT DATA
     const freshAgent = agents.find(a => a._id === selectedAgent._id);
 
     if (!freshAgent?.certificate2) {
@@ -39,15 +41,19 @@ export default function ShowResult() {
       status: "approved"
     });
 
-    setShowModal(false);
+    setSuccessMsg("Agent approved successfully ✅");
     loadAgents();
   };
 
+  // ⭐ GENERATE PDF
   const generatePDF = async () => {
     await axios.post("/api/createCertificate", { agentId: selectedAgent._id });
     await loadAgents();
+
+    setSuccessMsg("Certificate generated successfully ✅");
   };
 
+  // ⭐ UPLOAD CERTIFICATE
   const uploadCertificate = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -55,6 +61,8 @@ export default function ShowResult() {
 
     await axios.post("/api/uploadCertificate", formData);
     await loadAgents();
+
+    setSuccessMsg("Certificate uploaded successfully ✅");
   };
 
   const downloadFile = (url: string) => {
@@ -64,7 +72,7 @@ export default function ShowResult() {
     link.click();
   };
 
-  // ⭐ FILTER ONLY REVIEWED + APPROVED
+  // ⭐ FILTER
   const filteredAgents = useMemo(() => {
     return agents
       .filter(a => a.status === "reviewed" || a.status === "approved")
@@ -116,7 +124,6 @@ export default function ShowResult() {
           value={statusFilter}
           onChange={(e)=>{ setStatusFilter(e.target.value); setCurrentPage(1); }}
         >
-        
           <option value="all">Select Status</option>
           <option value="reviewed">Reviewed</option>
           <option value="approved">Approved</option>
@@ -163,7 +170,6 @@ export default function ShowResult() {
                 </span>
               </td>
 
-              {/* RESULT */}
               <td>
                 {agent.certificate1 ? (
                   <>
@@ -180,7 +186,6 @@ export default function ShowResult() {
                 ) : "—"}
               </td>
 
-              {/* GENERATED */}
               <td>
                 {agent.certificate2 ? (
                   <>
@@ -201,7 +206,11 @@ export default function ShowResult() {
                 {agent.status === "reviewed" && (
                   <button
                     className={styles.reviewBtn}
-                    onClick={()=>{ setSelectedAgent(agent); setShowModal(true); }}
+                    onClick={()=>{ 
+                      setSelectedAgent(agent); 
+                      setSuccessMsg(""); 
+                      setShowModal(true); 
+                    }}
                   >
                     Review
                   </button>
@@ -246,6 +255,12 @@ export default function ShowResult() {
               onClick={()=>setShowModal(false)}>✖</button>
 
             <h3>Finalize Approval</h3>
+
+            {successMsg && (
+              <div className={styles.successBanner}>
+                {successMsg}
+              </div>
+            )}
 
             <div className={styles.modalActions}>
               <input type="file"
