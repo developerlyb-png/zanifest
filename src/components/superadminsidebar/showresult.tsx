@@ -23,10 +23,31 @@ export default function ShowResult() {
 
   useEffect(() => { loadAgents(); }, []);
 
+  // ⭐ SAFE FILE OPEN
+  const openFile = (url?: string) => {
+    if (!url) return;
+
+    const fileName = url.split("/").pop();
+    if (!fileName) return;
+
+    window.open(`/api/file?file=${fileName}`, "_blank");
+  };
+
+  // ⭐ SAFE DOWNLOAD
+  const downloadFile = (url?: string) => {
+    if (!url) return;
+
+    const fileName = url.split("/").pop();
+    if (!fileName) return;
+
+    const link = document.createElement("a");
+    link.href = `/api/file?file=${fileName}`;
+    link.download = fileName;
+    link.click();
+  };
+
   // ⭐ FINAL APPROVE
   const approveAgent = async () => {
-
-    // 🔥 GET LATEST AGENT DATA
     const freshAgent = agents.find(a => a._id === selectedAgent._id);
 
     if (!freshAgent?.certificate2) {
@@ -57,14 +78,6 @@ export default function ShowResult() {
     await loadAgents();
   };
 
-  const downloadFile = (url: string) => {
-    const link = document.createElement("a");
-    link.href = `${window.location.origin}${url}`;
-    link.download = "";
-    link.click();
-  };
-
-  // ⭐ FILTER ONLY REVIEWED + APPROVED
   const filteredAgents = useMemo(() => {
     return agents
       .filter(a => a.status === "reviewed" || a.status === "approved")
@@ -91,9 +104,9 @@ export default function ShowResult() {
     currentPage * rowsPerPage
   );
 
-  const statusBadge = (status:string) => {
-    if(status === "approved") return styles.badgeApproved;
-    if(status === "reviewed") return styles.badgeReviewed;
+  const statusBadge = (status: string) => {
+    if (status === "approved") return styles.badgeApproved;
+    if (status === "reviewed") return styles.badgeReviewed;
     return styles.badgePending;
   };
 
@@ -108,15 +121,14 @@ export default function ShowResult() {
           placeholder="Search agent..."
           className={styles.searchInput}
           value={search}
-          onChange={(e)=>{ setSearch(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
         />
 
         <select
           className={styles.select}
           value={statusFilter}
-          onChange={(e)=>{ setStatusFilter(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
         >
-        
           <option value="all">Select Status</option>
           <option value="reviewed">Reviewed</option>
           <option value="approved">Approved</option>
@@ -125,7 +137,7 @@ export default function ShowResult() {
         <select
           className={styles.select}
           value={rowsPerPage}
-          onChange={(e)=>{
+          onChange={(e) => {
             setRowsPerPage(Number(e.target.value));
             setCurrentPage(1);
           }}
@@ -168,12 +180,12 @@ export default function ShowResult() {
                 {agent.certificate1 ? (
                   <>
                     <button className={styles.reviewBtn}
-                      onClick={()=>window.open(agent.certificate1,"_blank")}>
+                      onClick={() => openFile(agent.certificate1)}>
                       View
                     </button>
                     <button className={styles.reviewBtn}
-                      style={{marginLeft:5}}
-                      onClick={()=>downloadFile(agent.certificate1)}>
+                      style={{ marginLeft: 5 }}
+                      onClick={() => downloadFile(agent.certificate1)}>
                       Download
                     </button>
                   </>
@@ -185,12 +197,12 @@ export default function ShowResult() {
                 {agent.certificate2 ? (
                   <>
                     <button className={styles.reviewBtn}
-                      onClick={()=>window.open(agent.certificate2,"_blank")}>
+                      onClick={() => openFile(agent.certificate2)}>
                       View
                     </button>
                     <button className={styles.reviewBtn}
-                      style={{marginLeft:5}}
-                      onClick={()=>downloadFile(agent.certificate2)}>
+                      style={{ marginLeft: 5 }}
+                      onClick={() => downloadFile(agent.certificate2)}>
                       Download
                     </button>
                   </>
@@ -201,7 +213,7 @@ export default function ShowResult() {
                 {agent.status === "reviewed" && (
                   <button
                     className={styles.reviewBtn}
-                    onClick={()=>{ setSelectedAgent(agent); setShowModal(true); }}
+                    onClick={() => { setSelectedAgent(agent); setShowModal(true); }}
                   >
                     Review
                   </button>
@@ -215,25 +227,25 @@ export default function ShowResult() {
       {/* PAGINATION */}
       <div className={styles.pagination}>
         <span>
-          Showing {(currentPage-1)*rowsPerPage + 1} -
-          {Math.min(currentPage*rowsPerPage, filteredAgents.length)}
+          Showing {(currentPage - 1) * rowsPerPage + 1} -
+          {Math.min(currentPage * rowsPerPage, filteredAgents.length)}
           {" "}of {filteredAgents.length}
         </span>
 
         <div className={styles.pageButtons}>
           <button disabled={currentPage === 1}
-            onClick={()=>setCurrentPage(prev=>prev-1)}>Prev</button>
+            onClick={() => setCurrentPage(prev => prev - 1)}>Prev</button>
 
           {Array.from({ length: totalPages }, (_, i) => (
             <button key={i}
-              className={currentPage === i+1 ? styles.activePage : ""}
-              onClick={()=>setCurrentPage(i+1)}>
-              {i+1}
+              className={currentPage === i + 1 ? styles.activePage : ""}
+              onClick={() => setCurrentPage(i + 1)}>
+              {i + 1}
             </button>
           ))}
 
           <button disabled={currentPage === totalPages}
-            onClick={()=>setCurrentPage(prev=>prev+1)}>Next</button>
+            onClick={() => setCurrentPage(prev => prev + 1)}>Next</button>
         </div>
       </div>
 
@@ -243,16 +255,16 @@ export default function ShowResult() {
           <div className={styles.modalBox}>
 
             <button className={styles.closeBtn}
-              onClick={()=>setShowModal(false)}>✖</button>
+              onClick={() => setShowModal(false)}>✖</button>
 
             <h3>Finalize Approval</h3>
 
             <div className={styles.modalActions}>
               <input type="file"
-                onChange={(e)=>{
-                  const file=e.target.files?.[0];
-                  if(file) uploadCertificate(file);
-                }}/>
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadCertificate(file);
+                }} />
 
               <button className={styles.reviewBtn}
                 onClick={generatePDF}>Generate Certificate</button>

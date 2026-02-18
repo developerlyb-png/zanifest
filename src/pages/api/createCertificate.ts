@@ -74,7 +74,7 @@ export default async function handler(
     // NAME
     doc.text(`Mr./Ms. ${agent.firstName} ${agent.lastName}`, 60, y);
 
-    // ⭐ PROFILE IMAGE CIRCLE WITH GRAY BORDER
+    // PROFILE IMAGE RIGHT SIDE PERFECT ALIGN
     if (agent.profileImage) {
       try {
         const base64Data = agent.profileImage.split(",")[1];
@@ -82,29 +82,10 @@ export default async function handler(
 
         const pngBuffer = await sharp(imgBuffer).png().toBuffer();
 
-        const imgX = doc.page.width - 130;
-        const imgY = 80;
-        const size = 70;
-        const radius = size / 2;
-
-        // Border
-        doc
-          .lineWidth(1)
-          .strokeColor("#999")
-          .circle(imgX + radius, imgY + radius, radius)
-          .stroke();
-
-        // Clip circle
-        doc.save();
-        doc.circle(imgX + radius, imgY + radius, radius).clip();
-
-        // Image
-        doc.image(pngBuffer, imgX, imgY, {
-          width: size,
-          height: size,
+        doc.image(pngBuffer, doc.page.width - 130, 80, {
+          width: 70,
+          height: 70,
         });
-
-        doc.restore();
       } catch (err) {
         console.log("Profile image load error:", err);
       }
@@ -132,8 +113,10 @@ export default async function handler(
       34
     );
 
+    // POS CODE SAFE
     write(`POS Code: ${agent.agentCode || "N/A"}`, 16);
 
+    // PAN NUMBER
     write(`Pan No: ${agent.panNumber || "N/A"}`, 26);
 
     write(
