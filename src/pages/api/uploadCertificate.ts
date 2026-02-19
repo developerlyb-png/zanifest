@@ -27,12 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("FIELDS:", fields);
     console.log("FILES:", files);
 
-    // 🔥 normalize agentId
+    // normalize agentId
     const agentId = Array.isArray(fields.agentId)
       ? fields.agentId[0]
       : fields.agentId;
 
-    // 🔥 normalize file
+    // normalize file
     let uploadedFile: any = null;
 
     if (files.file) {
@@ -52,6 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("SAVE PATH:", filePath);
     console.log("AGENT ID:", agentId);
 
+    // save certificate path
     await Agent.findByIdAndUpdate(agentId, {
       $set: {
         certificate1: filePath,
@@ -59,9 +60,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
+    // ⭐⭐⭐ AGENT CODE GENERATION (ONLY ADDED LOGIC)
+
+    const agent = await Agent.findById(agentId);
+
+    if (agent && !agent.agentCode) {
+
+      const lastAgent = await Agent.findOne({
+        agentCode: { $regex: /^AG-/ }
+      })
+      .sort({ agentCode: -1 })
+      .select("agentCode");
+
+      let nextNumber = 1001;
+
+      if (lastAgent?.agentCode) {
+        const parts = lastAgent.agentCode.split("-");
+        const num = parseInt(parts[1]);
+        if (!isNaN(num)) nextNumber = num + 1;
+      }
+
+      const newCode = `AG-${nextNumber}`;
+
+      await Agent.findByIdAndUpdate(agentId, {
+        $set: { agentCode: newCode }
+      });
+
+      console.log("✅ Agent Code Generated:", newCode);
+    }
+
     return res.status(200).json({
       success: true,
       url: filePath
     });
+
   });
 }

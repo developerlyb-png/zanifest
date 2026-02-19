@@ -35,12 +35,12 @@ export default async function handler(
 
     let updateData:any = {};
 
-    // ⭐ REVIEWED STATUS
+    // REVIEWED
     if (status === "reviewed") {
       updateData.status = "reviewed";
     }
 
-    // ⭐ APPROVED ONLY IF CERTIFICATE EXISTS
+    // APPROVED
     if (status === "approved") {
 
       if (!agent.certificate2) {
@@ -52,7 +52,7 @@ export default async function handler(
 
       updateData.status = "approved";
 
-      // generate agent code if missing
+      // fallback agent code generator
       if (!agent.agentCode) {
 
         const lastAgent = await Agent.findOne({
@@ -73,7 +73,7 @@ export default async function handler(
       }
     }
 
-    // ⭐ REJECT
+    // REJECT
     if (status === "rejected") {
       updateData.status = "rejected";
     }
