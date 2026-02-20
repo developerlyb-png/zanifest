@@ -2,6 +2,14 @@ import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import Partner from "@/models/partners";
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb", // 👈 increase body limit
+    },
+  },
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     await dbConnect();
@@ -36,6 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(405).json({ error: "Method not allowed" });
   } catch (e) {
+    console.error(e);
     return res.status(500).json({ error: "Server error" });
   }
 }
