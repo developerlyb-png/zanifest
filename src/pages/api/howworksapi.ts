@@ -30,7 +30,7 @@ const DEFAULT_STEPS: Step[] = Array.from({ length: 3 }, () => ({
   image: "",
 }));
 
-const DEFAULT_SERVICES: Service[] = Array.from({ length: 8 }, () => ({
+const DEFAULT_SERVICES: Service[] = Array.from({ length: 9 }, () => ({
   name: "",
   desc: "",
   image: "",

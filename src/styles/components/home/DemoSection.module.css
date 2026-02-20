@@ -26,15 +26,15 @@
 .heading::after {
   content: "";
   position: absolute;
-  bottom: -15px; 
-  width: 25%; 
-  height: 5px; 
-  background-color: #fa621a; 
+  bottom: -15px;
+  width: 120px;
+  height: 5px;
+  background-color: #fa621a;
   border-radius: 3px;
 }
 
 .subHeading {
-  width: 60%;
+  max-width: 600px;
   text-align: center;
   font-size: 14px;
 }
@@ -42,34 +42,33 @@
 .list {
   margin-top: 40px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 2rem;
-  gap: 1rem;
-  width: 84%;
-  align-items: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
   justify-items: center;
-  justify-content: space-between;
 }
 
 .item {
   display: grid;
   grid-template-columns: 1fr 6fr;
-  place-items: center;
-  width: 84%;
-  grid-gap: 2rem;
-  gap: 2rem;
-  height: 100%;
-  padding-left: 20px;
-  padding-right: 20px;
-  box-shadow: 0 2px 8px 0 rgba(99, 99, 99, 0.2);
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  gap: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(99, 99, 99, 0.2);
   border-radius: 20px;
-  border-style: solid;
-  border-color: white;
+  border: 1px solid transparent;
   transition: all 0.3s;
 }
 
 .item:hover {
   border-color: #fa621a;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
 .imageCont {
@@ -78,6 +77,7 @@
   place-items: center;
   width: 80px;
   height: 80px;
+  margin: 0 auto;
 }
 
 .image {
@@ -87,16 +87,15 @@
 
 .name {
   font-size: 20px;
-  align-self: baseline;
-  margin: 0%;
-  margin-bottom: -9px;
+  margin: 0;
   font-weight: 500;
+  line-height: 1.15;
+  text-align: left;
 }
 
 .desc {
   font-size: 14px;
-  justify-content: justify;
-  line-height: 1.2;
+  line-height: 1.4;
   margin-top: 5px;
 }
 
@@ -105,41 +104,20 @@
   row-gap: 2px;
 }
 
-@media screen and (max-width: 768px) {
-  .item {
-    width: 75%; 
-  }
-
-  .heading::after {
-    width: 90%; /* underline length */
-  }
-
-  .heading {
-    font-size: 23px;
-    width: 86%;
-  }
-}
+/* ---------- TABLET ---------- */
 
 @media screen and (max-width: 900px) {
-  .item {
-    padding: 4px 20px;
-    grid-template-columns: 1fr;
-    place-items: center;
-    height: 95%;
-    gap: 1rem;
-    margin-left: 2px 2px;
-  }
-
-  .subHeading {
-    width: 80%;
-    text-align: justify;
-    font-size: 14px;
-    margin-top: 25px;
-  }
 
   .list {
-    width: 90%;
-    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 600px;
+    padding: 0 12px;
+  }
+
+  .item {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 12px;
   }
 
   .name {
@@ -147,99 +125,38 @@
   }
 
   .desc {
-    text-align: justify;
-    text-align: left;
+    text-align: center;
+  }
+
+  .subHeading {
+    max-width: 80%;
   }
 }
+
+/* ---------- MOBILE ---------- */
+
+@media screen and (max-width: 600px) {
+
+  .list {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+  }
+
+  .heading {
+    font-size: 22px;
+    width: 90%;
+  }
+
+  .heading::after {
+    display: none;
+  }
+
+}
+
+/* ---------- SMALL MOBILE ---------- */
 
 @media screen and (max-width: 370px) {
   .list {
     width: 94%;
   }
-}
-
-@media screen and (max-width: 700px) {
-  .head::after {
-    display: none;
-  }
-
-  .mobileEllipsis {
-    display: block;
-  }
-
-  .heading::after {
-    display: none;
-  }
-
-  .heading {
-    margin-bottom: 0%;
-  }
-
-  .head {
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 0px;
-    position: relative;
-  }
-}
-
-@media screen and (max-width: 900px) {
-
-  .list {
-    width: 100%;
-    padding: 0 10px;
-    box-sizing: border-box;
-  }
-
-  .item {
-    width: 100%;
-    padding: 16px;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    text-align: center;
-  }
-
-  .imageCont {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto;          /* 👈 icon center */
-  }
-
-  .image {
-    width: 42px;
-    height: 42px;
-  }
-
-  .content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .name {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0;
-    line-height: 1.2;
-    text-align: center;
-  }
-
-  .desc {
-    font-size: 13px;
-    line-height: 1.4;
-    text-align: center;
-    margin: 0;
-    max-width: 95%;
-  }
-}
-
-
-.name {
-  align-self: baseline;
-  margin: 0;
-  font-size: 20px;
-  font-weight: 500;
-margin-top: 8px;
-  line-height: 1.15;
 }

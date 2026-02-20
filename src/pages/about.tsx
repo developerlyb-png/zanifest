@@ -149,7 +149,7 @@ An <strong>industry veteran</strong>, Mayank is known for his strong operational
         />
 
         <p className={styles.text}>
-          Redefining Modren with Insurance experiences by creating a seamless, engaging,
+          Redefining Insurance experiences by creating a seamless, engaging,
           and inclusive platform that brings people together, removes
           complexity, and ensures everyone can easily discover, access,
           and enjoy meaningful moments without barriers.
