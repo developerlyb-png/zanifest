@@ -16,7 +16,7 @@ function UserDetails() {
         <div className={styles.line}></div>
         <div className={styles.detailItem}>
           <MdEmail />
-          <h4 className={styles.detailsText}>contact@zanifestinsurance.com</h4>
+          <h4 className={styles.detailsText}>support@zanifestinsurance.com </h4>
         </div>
         {/* <button onClick={() => signOut()}>
           Logout

@@ -18,7 +18,7 @@ const ThankYouModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         <div className="icon">✓</div>
 
         <h2>THANK YOU</h2>
-        <p>Your application is received successfully. We will get back to you soon.</p>
+        <p>We have received your message and will be in touch shortly.</p>
       </div>
 
       <style jsx>{`
