@@ -55,21 +55,25 @@ export default async function handler(
       // fallback agent code generator
       if (!agent.agentCode) {
 
-        const lastAgent = await Agent.findOne({
-          agentCode: { $regex: /^AG-/ }
-        })
-        .sort({ agentCode: -1 })
-        .select("agentCode");
+      // Find last ZIP agent
+// Find last ZIP agent
+const lastAgent = await Agent.findOne({
+  agentCode: { $regex: /^ZIP\d+$/ }
+})
+.sort({ createdAt: -1 })   // safer than string sort
+.select("agentCode");
 
-        let nextNumber = 1001;
+let nextNumber = 1309; // default start
 
-        if (lastAgent?.agentCode) {
-          const parts = lastAgent.agentCode.split("-");
-          const num = parseInt(parts[1]);
-          if (!isNaN(num)) nextNumber = num + 1;
-        }
+if (lastAgent?.agentCode) {
+  const num = parseInt(lastAgent.agentCode.replace("ZIP", ""), 10);
+  if (!isNaN(num)) {
+    nextNumber = num + 1;
+  }
+}
 
-        updateData.agentCode = `AG-${nextNumber}`;
+// Generate ZIP format
+updateData.agentCode = `ZIP${nextNumber}`;
       }
     }
 
