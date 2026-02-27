@@ -154,9 +154,9 @@ const animationMap = ["fade-right", "fade-up", "fade-left"];
             />
             <h2 className={styles.name}>{item.name}</h2>
             <h6 className={styles.desc}>{item.desc}</h6>
-            <Link href={item?.link || "#"} className={styles.arrow}>
+            {/* <Link href={item?.link || "#"} className={styles.arrow}>
               <FaArrowRight />
-            </Link>
+            </Link> */}
           </div>
         ))}
       </div>
@@ -179,9 +179,9 @@ const animationMap = ["fade-right", "fade-up", "fade-left"];
               />
               <h2 className={styles.name}>{item.name}</h2>
               <h6 className={styles.desc}>{item.desc}</h6>
-              <Link href={item?.link || "#"} className={styles.arrow}>
+              {/* <Link href={item?.link || "#"} className={styles.arrow}>
                 <FaArrowRight />
-              </Link>
+              </Link> */}
             </div>
           ))}
         />

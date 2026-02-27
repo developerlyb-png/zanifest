@@ -52,7 +52,7 @@ export default function ReviewApplications() {
   const [managerList, setManagerList] = useState<any[]>([]);
   const [assignManager, setAssignManager] = useState("");
   const [irdaiVerified, setIrdaiVerified] = useState(false);
-
+const [iibVerified, setIibVerified] = useState(false);
   // local verification states for currently selected agent
   const [panStatus, setPanStatus] = useState<VerificationState>("pending");
   const [aadhaarStatus, setAadhaarStatus] =
@@ -99,6 +99,7 @@ export default function ReviewApplications() {
       setRemark("");
       setAssignManager(res.data?.assignedTo || "");
       setIrdaiVerified(false);
+      setIibVerified(false);
     } catch (err) {
       console.error("openReview error", err);
     } finally {
@@ -230,6 +231,10 @@ export default function ReviewApplications() {
     setIrdaiVerified(true);
   };
 
+  const handleIibClick = () => {
+  window.open("https://pos.iib.gov.in/", "_blank");
+  setIibVerified(true);
+};
   // Helpers to get full preview URL when DB stores filename only
   const getFileUrl = (filename?: string | null) => {
     if (!filename) return null;
@@ -717,6 +722,13 @@ export default function ReviewApplications() {
                     >
                       Open IRDAI
                     </button>
+                    <button
+  className={styles.irdaiBtn}
+  onClick={handleIibClick}
+  type="button"
+>
+  Open IIB Verification
+</button>
                     <div className={styles.irdaiStatus}>
                       {irdaiVerified ? "Done" : "Not Verified"}
                     </div>
