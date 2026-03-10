@@ -21,7 +21,7 @@ interface AgentData {
 
   adhaarNumber?: string;
   adhaarAttachment?: string;
-
+adhaarBackAttachment?: string;
   // ✅ ADD THESE
   yearofpassing10th?: string;
   tenthMarksheetAttachment?: string;
@@ -57,6 +57,8 @@ const [iibVerified, setIibVerified] = useState(false);
   const [panStatus, setPanStatus] = useState<VerificationState>("pending");
   const [aadhaarStatus, setAadhaarStatus] =
     useState<VerificationState>("pending");
+    const [aadhaarBackStatus, setAadhaarBackStatus] =
+  useState<VerificationState>("pending");
   const [remark, setRemark] = useState("");
   const [approveLoading, setApproveLoading] = useState(false);
   const [rejectLoading, setRejectLoading] = useState(false);
@@ -165,7 +167,7 @@ const [iibVerified, setIibVerified] = useState(false);
 
   // When user approves/rejects overall application (final action)
   const handleReview = async (action: "accept" | "reject") => {
-    if (panStatus === "pending" || aadhaarStatus === "pending") {
+    if (panStatus === "pending" || aadhaarStatus === "pending" || aadhaarBackStatus === "pending") {
       alert(
         "Please complete PAN and Aadhaar verification before final review."
       );
@@ -198,6 +200,7 @@ const [iibVerified, setIibVerified] = useState(false);
         verification: {
           panStatus,
           aadhaarStatus,
+          aadhaarBackStatus,
           tenthStatus,
           twelfthStatus,
         },
@@ -309,17 +312,18 @@ const [iibVerified, setIibVerified] = useState(false);
               {/* top grid */}
               
               <div className={styles.grid}>
-                   <div className={styles.field}>
+                 <div className={styles.field}>
   <label>Agent ID</label>
   <input
-  readOnly
-  value={
-    selected?._id
-      ? `Ag${selected._id.toString().slice(-6)}`
-      : ""
-  }
-/>
-
+    readOnly
+    value={
+      selected
+        ? `POSP${String(
+            applications.findIndex((a) => a._id === selected._id) + 1
+          ).padStart(4, "0")}`
+        : ""
+    }
+  />
 </div>
                 {/* <div className={styles.field}>
   <label>Agent ID</label>
@@ -538,7 +542,64 @@ const [iibVerified, setIibVerified] = useState(false);
                   </div>
                 </div>
               </div>
+<div className={styles.docCard}>
+  <div className={styles.docHeader}>
+    <strong>Aadhaar Backside</strong>
+    <span className={styles.smallNote}>Preview & verify</span>
+  </div>
 
+  <div className={styles.docPreviewWrap}>
+    {selected.adhaarBackAttachment ? (
+      selected.adhaarBackAttachment.startsWith("data:application/pdf") ? (
+        <object
+          data={selected.adhaarBackAttachment}
+          type="application/pdf"
+          className={styles.docPreview}
+          onClick={() => openInNewTab(selected.adhaarBackAttachment)}
+        />
+      ) : (
+        <img
+          src={
+            selected.adhaarBackAttachment.startsWith("data:")
+              ? selected.adhaarBackAttachment
+              : getFileUrl(selected.adhaarBackAttachment) || ""
+          }
+          className={styles.docPreview}
+          alt="Aadhaar Back"
+          onClick={() => openInNewTab(selected.adhaarBackAttachment)}
+        />
+      )
+    ) : (
+      <div className={styles.noPreview}>No Aadhaar backside uploaded</div>
+    )}
+  </div>
+
+  <div className={styles.verifyRow}>
+    <button
+      className={`${styles.verifyAction} ${
+        aadhaarBackStatus === "approved" ? styles.approved : ""
+      }`}
+      onClick={() => setAadhaarBackStatus("approved")}
+      disabled={aadhaarBackStatus === "approved"}
+    >
+      Approve
+    </button>
+
+    <button
+      className={`${styles.verifyAction} ${styles.reject}`}
+      onClick={() => setAadhaarBackStatus("rejected")}
+      disabled={aadhaarBackStatus === "rejected"}
+    >
+      Reject
+    </button>
+
+    <div className={styles.statusPill}>
+      {aadhaarBackStatus === "pending" && "Pending"}
+      {aadhaarBackStatus === "approved" && "Approved"}
+      {aadhaarBackStatus === "rejected" && "Rejected"}
+    </div>
+  </div>
+</div>
               <div className={styles.docCard}>
                 <div className={styles.docHeader}>
                   <strong>Educational Documents</strong>

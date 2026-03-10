@@ -87,8 +87,8 @@ export default async function handler(
       // Nominee
       "nomineeName",
       "nomineeRelation",
-      "nomineeAadharNumber",
-      "nomineePanNumber",
+      // "nomineeAadharNumber",
+      // "nomineePanNumber",
 
       // Bank
       "accountHolderName",
@@ -111,17 +111,17 @@ export default async function handler(
     /* =================================================
        📎 REQUIRED ATTACHMENTS (FIRST TIME ONLY)
        ================================================= */
-    if (!data.nomineePanAttachment) {
-      return res.status(400).json({
-        error: "Missing: nomineePanAttachment",
-      });
-    }
+    // if (!data.nomineePanAttachment) {
+    //   return res.status(400).json({
+    //     error: "Missing: nomineePanAttachment",
+    //   });
+    // }
 
-    if (!data.nomineeAadhaarAttachment) {
-      return res.status(400).json({
-        error: "Missing: nomineeAadhaarAttachment",
-      });
-    }
+    // if (!data.nomineeAadhaarAttachment) {
+    //   return res.status(400).json({
+    //     error: "Missing: nomineeAadhaarAttachment",
+    //   });
+    // }
 
     if (!data.cancelledChequeAttachment) {
       return res.status(400).json({

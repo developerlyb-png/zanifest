@@ -42,6 +42,9 @@ type AttachmentType = {
   adhaarAttachment: string | null;
   adhaarFileName?: string;
 
+  adhaarBackAttachment: string | null;      
+  adhaarBackFileName?: string;             
+
   nomineePanAttachment: string | null;
   nomineePanFileName?: string;
 
@@ -157,6 +160,7 @@ const totalSteps = 5;
 const [attachments, setAttachments] = useState<AttachmentType>({
   panAttachment: null,
   adhaarAttachment: null,
+  adhaarBackAttachment: null,
   nomineePanAttachment: null,
   nomineeAadhaarAttachment: null,
   cancelledChequeAttachment: null,
@@ -176,61 +180,43 @@ const [attachments, setAttachments] = useState<AttachmentType>({
     }
 
     if (step === 2) {
-      if (!formData.pinCode) newErrors.pinCode = "Required";
-      if (!formData.panNumber) newErrors.panNumber = "Required";
-      if (!formData.adhaarNumber) newErrors.adhaarNumber = "Required";
+  if (!formData.pinCode) newErrors.pinCode = "Required";
+  if (!formData.panNumber) newErrors.panNumber = "Required";
+  if (!formData.adhaarNumber) newErrors.adhaarNumber = "Required";
 
-      // ✅ ADD: normal create mode
-      if (!attachments.panAttachment) {
-        newErrors.panAttachment = "Upload required";
-      }
+  if (!attachments.panAttachment) {
+    newErrors.panAttachment = "Upload required";
+  }
 
-      if (!attachments.adhaarAttachment) {
-        newErrors.adhaarAttachment = "Upload required";
-      }
+  if (!attachments.adhaarAttachment) {
+    newErrors.adhaarAttachment = "Upload required";
+  }
 
-      // ✅ existing rejected logic stays
-      if (rejectedFields.includes("panNumber") && !attachments.panAttachment) {
-        newErrors.panAttachment = "Upload required";
-      }
-
-      if (
-        rejectedFields.includes("adhaarNumber") &&
-        !attachments.adhaarAttachment
-      ) {
-        newErrors.adhaarAttachment = "Upload required";
-      }
-    }
+  if (!attachments.adhaarBackAttachment) {
+    newErrors.adhaarBackAttachment = "Upload required";
+  }
+}
 
 if (step === 3) {
+
+  // 10th required
   if (!formData.yearofpassing10th)
     newErrors.yearofpassing10th = "Required";
 
   if (!attachments.tenthMarksheetAttachment)
     newErrors.tenthMarksheetAttachment = "Upload required";
 
-  if (!formData.yearofpassing12th)
-    newErrors.yearofpassing12th = "Required";
-
-  if (!attachments.twelfthMarksheetAttachment)
+  // 12th optional
+  if (formData.yearofpassing12th && !attachments.twelfthMarksheetAttachment) {
     newErrors.twelfthMarksheetAttachment = "Upload required";
-}
+  }
 
+}
 
 if (step === 4) {
   if (!formData.nomineeName) newErrors.nomineeName = "Required";
   if (!formData.nomineeRelation) newErrors.nomineeRelation = "Required";
-  if (!formData.nomineePanNumber) newErrors.nomineePanNumber = "Required";
-  if (!formData.nomineeAadharNumber)
-    newErrors.nomineeAadharNumber = "Required";
-
-  if (!attachments.nomineePanAttachment)
-    newErrors.nomineePanAttachment = "Upload required";
-
-  if (!attachments.nomineeAadhaarAttachment)
-    newErrors.nomineeAadhaarAttachment = "Upload required";
 }
-
 if (step === 5) {
   if (!formData.accountHolderName) newErrors.accountHolderName = "Required";
   if (!formData.bankName) newErrors.bankName = "Required";
@@ -291,6 +277,13 @@ if (step === 5) {
           adhaarFileName: rejected.includes("adhaarNumber")
             ? undefined
             : "Aadhaar.pdf",
+              adhaarBackAttachment: rejected.includes("adhaarNumber")
+    ? null
+    : d.agent.adhaarBackAttachment,
+  adhaarBackFileName: rejected.includes("adhaarNumber")
+    ? undefined
+    : "AadhaarBack.pdf",
+
 
           nomineePanAttachment: rejected.includes("nomineePanNumber")
             ? null
@@ -357,91 +350,100 @@ if (step === 5) {
     return base.length > limit ? base.slice(0, limit) + "..." + ext : name;
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const key = e.target.name as keyof AttachmentType;
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const key = e.target.name as keyof AttachmentType;
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    // ✅ ADD THIS — invalid file ko "no file" jaisa treat karo
-    if (file.size > 200 * 1024) {
-      alert("File size must be less than or equal to 200KB");
+  // ✅ Different size limit
+  const maxSize =
+    key === "panAttachment" ||
+      key === "adhaarAttachment" ||
+      key === "adhaarBackAttachment" ? 500 * 1024 : 200 * 1024;
 
-      // input clear
-      e.target.value = "";
+  if (file.size > maxSize) {
+    alert(
+      key === "panAttachment" ||
+      key === "adhaarAttachment" ||
+      key === "adhaarBackAttachment"
+        ? "Please Upload must be 500KB"
+        : "File size must be ≤ 200KB"
+    );
 
-      // attachment state clear (very important)
-      setAttachments((p) => ({
-        ...p,
-        [key]: null,
-        [`${key.replace("Attachment", "")}FileName`]: undefined,
-      }));
+    // clear input
+    e.target.value = "";
 
-      return; // ⛔ stop here
-    }
+    // clear state
+    setAttachments((p) => ({
+      ...p,
+      [key]: null,
+      [`${key.replace("Attachment", "")}FileName`]: undefined,
+    }));
 
-    // 👇 existing logic EXACT SAME
-    const reader = new FileReader();
+    return;
+  }
 
-    reader.onload = () => {
-      setAttachments((p) => ({
-        ...p,
-        [key]: reader.result as string,
-        [`${key.replace("Attachment", "")}FileName`]: shortFileName(file.name),
-      }));
-    };
+  const reader = new FileReader();
 
-    reader.readAsDataURL(file);
+  reader.onload = () => {
+    setAttachments((p) => ({
+      ...p,
+      [key]: reader.result as string,
+      [`${key.replace("Attachment", "")}FileName`]: shortFileName(file.name),
+    }));
   };
 
+  reader.readAsDataURL(file);
+};
   /* ================= VALIDATION ================= */
-  const validateBeforeSubmit = () => {
-    const requiredFields: (keyof FormDataType)[] = [
-      "firstName",
-      "lastName",
-      "phone",
-      "pinCode",
-      "panNumber",
-      "adhaarNumber",
-      "nomineeName",
-      "nomineeRelation",
-      "nomineePanNumber",
-      "nomineeAadharNumber",
-      "accountHolderName",
-      "bankName",
-      "accountNumber",
-      
-      "ifscCode",
-      "branchLocation",
-      "yearofpassing10th",
-      "yearofpassing12th"
-    ];
+const validateBeforeSubmit = () => {
+  const requiredFields: (keyof FormDataType)[] = [
+    "firstName",
+    "lastName",
+    "phone",
+    "pinCode",
+    "panNumber",
+    "adhaarNumber",
+    "nomineeName",
+    "nomineeRelation",
+    "nomineePanNumber",
+    "nomineeAadharNumber",
+    "accountHolderName",
+    "bankName",
+    "accountNumber",
+    "ifscCode",
+    "branchLocation",
+    "yearofpassing10th",
+    // "yearofpassing12th"
+  ];
 
-    for (const field of requiredFields) {
-      if (!formData[field]) {
-        alert(`Missing required field: ${field}`);
-        return false;
-      }
+  for (const field of requiredFields) {
+    if (!formData[field]) {
+      alert(`Missing required field: ${field}`);
+      return false;
     }
+  }
 
-    const requiredAttachments: (keyof AttachmentType)[] = [
-      "panAttachment",
-      "adhaarAttachment",
-      "nomineePanAttachment",
-      "nomineeAadhaarAttachment",
-      "cancelledChequeAttachment",
-     "tenthMarksheetAttachment",
-  "twelfthMarksheetAttachment",
-    ];
+  const requiredAttachments: (keyof AttachmentType)[] = [
+    "panAttachment",
+    "adhaarAttachment",
+    "adhaarBackAttachment",
+    "nomineePanAttachment",
+    "nomineeAadhaarAttachment",
+    "cancelledChequeAttachment",
+    "tenthMarksheetAttachment",
+    // "twelfthMarksheetAttachment",
+  ];
 
-    for (const att of requiredAttachments) {
-      if (!attachments[att]) {
-        alert(`Please upload ${att}`);
-        return false;
-      }
+  for (const att of requiredAttachments) {
+    if (!attachments[att]) {
+      alert(`Please upload ${att}`);
+      return false;
     }
+  }
 
-    return true;
-  };
+  return true;
+};
   const attachmentMap: Partial<
     Record<keyof FormDataType, keyof AttachmentType>
   > = {
@@ -471,6 +473,9 @@ if (step === 5) {
           payload.adhaarAttachment = attachments.adhaarAttachment;
         }
       }
+       if (attachments.adhaarBackAttachment) {
+    payload.adhaarBackAttachment = attachments.adhaarBackAttachment;
+  }
     } else {
       // ✅ New submission
       payload = {
@@ -604,13 +609,15 @@ const handleProfileImageChange = async (
               }
               className={errors.phone ? styles.errorInput : ""}
             />
-                     
-           <input
+              <div className={styles.fileUpload}>
+  <label>Upload Profile Image</label>
+
+  <input
     type="file"
     accept="image/png,image/jpeg,image/webp,image/gif"
     onChange={handleProfileImageChange}
   />
-
+</div>
                      
             <div className={styles.passwordWrapper}>
               <input
@@ -629,61 +636,72 @@ const handleProfileImageChange = async (
         )}
 
         {step === 2 && (
-          <>
-            <h3>Address & KYC</h3>
-            <input
-              placeholder="Pin Code"
-              value={formData.pinCode}
-              onChange={handlePincodeChange}
-              className={errors.pinCode ? styles.errorInput : ""}
-            />
-            <input placeholder="City" value={formData.city} disabled />
-            <input placeholder="State" value={formData.state} disabled />
+  <>
+    <h3>Address & KYC</h3>
 
-            <input
-              id="panNumber"
-              placeholder="PAN Number"
-              value={formData.panNumber}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  panNumber: formatPAN(e.target.value),
-                }))
-              }
-              className={errors.panNumber ? styles.errorInput : ""}
-            />
+    <input
+      placeholder="Pin Code"
+      value={formData.pinCode}
+      onChange={handlePincodeChange}
+      className={errors.pinCode ? styles.errorInput : ""}
+    />
 
-            <FileInput
-              label="Upload PAN (Max upload size 200kb)"
-              name="panAttachment"
-              fileName={attachments.panFileName}
-              onChange={handleFileChange}
-              error={!!errors.panAttachment}
-            />
+    <input placeholder="City" value={formData.city} disabled />
+    <input placeholder="State" value={formData.state} disabled />
 
-            <input
-              id="adhaarNumber"
-              placeholder="Aadhaar Number"
-              disabled={isLocked("adhaarNumber")}
-              value={formData.adhaarNumber}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  adhaarNumber: formatAadhaar(e.target.value),
-                }))
-              }
-              className={errors.adhaarNumber ? styles.errorInput : ""}
-            />
+    <input
+      id="panNumber"
+      placeholder="PAN Number"
+      value={formData.panNumber}
+      onChange={(e) =>
+        setFormData((p) => ({
+          ...p,
+          panNumber: formatPAN(e.target.value),
+        }))
+      }
+      className={errors.panNumber ? styles.errorInput : ""}
+    />
 
-            <FileInput
-              label="Upload Aadhaar (Max upload size 200kb)"
-              name="adhaarAttachment"
-              fileName={attachments.adhaarFileName}
-              onChange={handleFileChange}
-              error={!!errors.adhaarAttachment}
-            />
-          </>
-        )}
+    <FileInput
+      label="Upload PAN (Max upload size 500kb)"
+      name="panAttachment"
+      fileName={attachments.panFileName}
+      onChange={handleFileChange}
+      error={!!errors.panAttachment}
+    />
+
+    <input
+      id="adhaarNumber"
+      placeholder="Aadhaar Number"
+      disabled={isLocked("adhaarNumber")}
+      value={formData.adhaarNumber}
+      onChange={(e) =>
+        setFormData((p) => ({
+          ...p,
+          adhaarNumber: formatAadhaar(e.target.value),
+        }))
+      }
+      className={errors.adhaarNumber ? styles.errorInput : ""}
+    />
+
+    <FileInput
+      label="Upload Aadhaar Front (Max upload size 500kb)"
+      name="adhaarAttachment"
+      fileName={attachments.adhaarFileName}
+      onChange={handleFileChange}
+      error={!!errors.adhaarAttachment}
+    />
+
+    {/* ✅ Aadhaar Backside Upload */}
+    <FileInput
+      label="Upload Aadhaar Backside (Max upload size 500kb)"
+      name="adhaarBackAttachment"
+      fileName={attachments.adhaarBackFileName}
+      onChange={handleFileChange}
+      error={!!errors.adhaarBackAttachment}
+    />
+  </>
+)}
 {step === 3 && (
   <>
     <h3>Education Details</h3>
@@ -738,72 +756,79 @@ const handleProfileImageChange = async (
 
 
 
-        {step === 4 && (
-          <>
-            <h3>Nominee Details</h3>
-            <input
-              id="nomineeName"
-              placeholder="Nominee Name"
-              value={formData.nomineeName}
-              onChange={handleChange}
-              className={errors.nomineeName ? styles.errorInput : ""}
-            />
-            <input
-              id="nomineeRelation"
-              placeholder="Relation"
-              value={formData.nomineeRelation}
-              onChange={handleChange}
-              className={errors.nomineeRelation ? styles.errorInput : ""}
-            />
-            {/* Nominee PAN */}
-            <div className={styles.docRow}>
-              <input
-                id="nomineePanNumber"
-                placeholder="Nominee PAN Number"
-                value={formData.nomineePanNumber}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    nomineePanNumber: formatPAN(e.target.value),
-                  }))
-                }
-                className={errors.nomineePanNumber ? styles.errorInput : ""}
-              />
+     {step === 4 && (
+  <>
+    <h3>Nominee Details</h3>
 
-              <FileInput
-                label="Upload PAN (Max upload size 200kb)"
-                name="nomineePanAttachment"
-                fileName={attachments.nomineePanFileName}
-                onChange={handleFileChange}
-                error={!!errors.nomineePanAttachment}
-              />
-            </div>
+    <input
+      id="nomineeName"
+      placeholder="Nominee Name"
+      value={formData.nomineeName}
+      onChange={handleChange}
+      className={errors.nomineeName ? styles.errorInput : ""}
+    />
 
-            {/* Nominee Aadhaar */}
-            <div className={styles.docRow}>
-              <input
-                id="nomineeAadharNumber"
-                placeholder="Nominee Aadhaar Number"
-                value={formData.nomineeAadharNumber}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    nomineeAadharNumber: formatAadhaar(e.target.value),
-                  }))
-                }
-                className={errors.nomineeAadharNumber ? styles.errorInput : ""}
-              />
+    <input
+      id="nomineeRelation"
+      placeholder="Relation"
+      value={formData.nomineeRelation}
+      onChange={handleChange}
+      className={errors.nomineeRelation ? styles.errorInput : ""}
+    />
 
-              <FileInput
-                label="Upload Aadhaar (Max upload size 200kb)"
-                name="nomineeAadhaarAttachment"
-                fileName={attachments.nomineeAadhaarFileName}
-                onChange={handleFileChange}
-                error={!!errors.nomineeAadhaarAttachment}
-              />
-            </div>
-          </>
-        )}
+    {/* Nominee PAN (Hidden) */}
+    {false && (
+      <div className={styles.docRow}>
+        <input
+          id="nomineePanNumber"
+          placeholder="Nominee PAN Number"
+          value={formData.nomineePanNumber}
+          onChange={(e) =>
+            setFormData((p) => ({
+              ...p,
+              nomineePanNumber: formatPAN(e.target.value),
+            }))
+          }
+          className={errors.nomineePanNumber ? styles.errorInput : ""}
+        />
+
+        <FileInput
+          label="Upload PAN (Max upload size 200kb)"
+          name="nomineePanAttachment"
+          fileName={attachments.nomineePanFileName}
+          onChange={handleFileChange}
+          error={!!errors.nomineePanAttachment}
+        />
+      </div>
+    )}
+
+    {/* Nominee Aadhaar (Hidden) */}
+    {false && (
+      <div className={styles.docRow}>
+        <input
+          id="nomineeAadharNumber"
+          placeholder="Nominee Aadhaar Number"
+          value={formData.nomineeAadharNumber}
+          onChange={(e) =>
+            setFormData((p) => ({
+              ...p,
+              nomineeAadharNumber: formatAadhaar(e.target.value),
+            }))
+          }
+          className={errors.nomineeAadharNumber ? styles.errorInput : ""}
+        />
+
+        <FileInput
+          label="Upload Aadhaar (Max upload size 200kb)"
+          name="nomineeAadhaarAttachment"
+          fileName={attachments.nomineeAadhaarFileName}
+          onChange={handleFileChange}
+          error={!!errors.nomineeAadhaarAttachment}
+        />
+      </div>
+    )}
+  </>
+)}
 
         {step === 5 && (
           <>

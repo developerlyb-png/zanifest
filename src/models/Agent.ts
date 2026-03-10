@@ -24,6 +24,7 @@ export interface IAgent extends Document {
   panAttachment?: string;
   adhaarNumber?: string;
   adhaarAttachment?: string;
+  adhaarBackAttachment?: string;
  certificate?: string;
  certificate1?: string;
  certificate2?: string;
@@ -125,6 +126,7 @@ agentCode: { type: String, unique: true, sparse: true },
     panAttachment: { type: String },
     adhaarNumber: { type: String },
     adhaarAttachment: { type: String },
+    adhaarBackAttachment: { type: String },
     // ===== EDUCATION DETAILS =====
 yearofpassing10th: { type: String },
 tenthMarksheetAttachment: { type: String, default: null },

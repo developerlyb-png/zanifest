@@ -16,7 +16,6 @@ export default function ShowResult() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // ⭐ SUCCESS MESSAGE
   const [successMsg, setSuccessMsg] = useState("");
 
   const loadAgents = async () => {
@@ -24,7 +23,9 @@ export default function ShowResult() {
     setAgents(res.data || []);
   };
 
-  useEffect(() => { loadAgents(); }, []);
+  useEffect(() => {
+    loadAgents();
+  }, []);
 
   // ⭐ FINAL APPROVE
   const approveAgent = async () => {
@@ -45,9 +46,26 @@ export default function ShowResult() {
     loadAgents();
   };
 
+  // ⭐ FAIL AGENT
+  const failAgent = async (agent:any) => {
+
+    if(!confirm("Are you sure you want to mark this agent as Failed?")) return;
+
+    await axios.post("/api/updateStatus", {
+      id: agent._id,
+      status: "failed"
+    });
+
+    loadAgents();
+  };
+
   // ⭐ GENERATE PDF
   const generatePDF = async () => {
-    await axios.post("/api/createCertificate", { agentId: selectedAgent._id });
+
+    await axios.post("/api/createCertificate", {
+      agentId: selectedAgent._id
+    });
+
     await loadAgents();
 
     setSuccessMsg("Certificate generated successfully ✅");
@@ -55,27 +73,38 @@ export default function ShowResult() {
 
   // ⭐ UPLOAD CERTIFICATE
   const uploadCertificate = async (file: File) => {
+
     const formData = new FormData();
+
     formData.append("file", file);
     formData.append("agentId", selectedAgent._id);
 
     await axios.post("/api/uploadCertificate", formData);
+
     await loadAgents();
 
     setSuccessMsg("Certificate uploaded successfully ✅");
   };
 
   const downloadFile = (url: string) => {
+
     const link = document.createElement("a");
+
     link.href = `${window.location.origin}${url}`;
     link.download = "";
+
     link.click();
   };
 
   // ⭐ FILTER
   const filteredAgents = useMemo(() => {
+
     return agents
-      .filter(a => a.status === "reviewed" || a.status === "approved")
+      .filter(a =>
+        a.status === "reviewed" ||
+        a.status === "approved" ||
+        a.status === "failed"
+      )
       .filter(a => {
 
         const matchesSearch =
@@ -100,8 +129,13 @@ export default function ShowResult() {
   );
 
   const statusBadge = (status:string) => {
+
     if(status === "approved") return styles.badgeApproved;
+
     if(status === "reviewed") return styles.badgeReviewed;
+
+    if(status === "failed") return styles.badgeFailed;
+
     return styles.badgePending;
   };
 
@@ -112,21 +146,29 @@ export default function ShowResult() {
 
       {/* FILTER */}
       <div className={styles.filterBar}>
+
         <input
           placeholder="Search agent..."
           className={styles.searchInput}
           value={search}
-          onChange={(e)=>{ setSearch(e.target.value); setCurrentPage(1); }}
+          onChange={(e)=>{
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
         />
 
         <select
           className={styles.select}
           value={statusFilter}
-          onChange={(e)=>{ setStatusFilter(e.target.value); setCurrentPage(1); }}
+          onChange={(e)=>{
+            setStatusFilter(e.target.value);
+            setCurrentPage(1);
+          }}
         >
           <option value="all">Select Status</option>
           <option value="reviewed">Reviewed</option>
           <option value="approved">Approved</option>
+          <option value="failed">Failed</option>
         </select>
 
         <select
@@ -141,11 +183,14 @@ export default function ShowResult() {
           <option value={10}>10</option>
           <option value={20}>20</option>
         </select>
+
       </div>
 
       {/* TABLE */}
       <table className={styles.table}>
+
         <thead>
+
           <tr>
             <th>Agent Code</th>
             <th>Name</th>
@@ -155,13 +200,21 @@ export default function ShowResult() {
             <th>Certificate</th>
             <th>Action</th>
           </tr>
+
         </thead>
 
         <tbody>
+
           {paginatedAgents.map((agent) => (
+
             <tr key={agent._id} className={styles.tableRow}>
+
               <td>{agent.agentCode || "-"}</td>
-              <td>{agent.firstName} {agent.lastName}</td>
+
+              <td>
+                {agent.firstName} {agent.lastName}
+              </td>
+
               <td>{agent.email}</td>
 
               <td>
@@ -173,13 +226,18 @@ export default function ShowResult() {
               <td>
                 {agent.certificate1 ? (
                   <>
-                    <button className={styles.reviewBtn}
-                      onClick={()=>window.open(agent.certificate1,"_blank")}>
+                    <button
+                      className={styles.reviewBtn}
+                      onClick={()=>window.open(agent.certificate1,"_blank")}
+                    >
                       View
                     </button>
-                    <button className={styles.reviewBtn}
+
+                    <button
+                      className={styles.reviewBtn}
                       style={{marginLeft:5}}
-                      onClick={()=>downloadFile(agent.certificate1)}>
+                      onClick={()=>downloadFile(agent.certificate1)}
+                    >
                       Download
                     </button>
                   </>
@@ -189,13 +247,18 @@ export default function ShowResult() {
               <td>
                 {agent.certificate2 ? (
                   <>
-                    <button className={styles.reviewBtn}
-                      onClick={()=>window.open(agent.certificate2,"_blank")}>
+                    <button
+                      className={styles.reviewBtn}
+                      onClick={()=>window.open(agent.certificate2,"_blank")}
+                    >
                       View
                     </button>
-                    <button className={styles.reviewBtn}
+
+                    <button
+                      className={styles.reviewBtn}
                       style={{marginLeft:5}}
-                      onClick={()=>downloadFile(agent.certificate2)}>
+                      onClick={()=>downloadFile(agent.certificate2)}
+                    >
                       Download
                     </button>
                   </>
@@ -203,26 +266,53 @@ export default function ShowResult() {
               </td>
 
               <td>
+
                 {agent.status === "reviewed" && (
-                  <button
-                    className={styles.reviewBtn}
-                    onClick={()=>{ 
-                      setSelectedAgent(agent); 
-                      setSuccessMsg(""); 
-                      setShowModal(true); 
-                    }}
-                  >
-                    Review
-                  </button>
+
+                  <>
+
+                    {/* PASS */}
+                    <button
+                      className={styles.reviewBtn}
+                      onClick={()=>{
+
+                        setSelectedAgent(agent);
+
+                        setSuccessMsg("");
+
+                        setShowModal(true);
+                      }}
+                    >
+                      Pass
+                    </button>
+
+                    {/* FAIL */}
+                    <button
+                      className={styles.failBtn}
+                      style={{marginLeft:5}}
+                      onClick={()=>failAgent(agent)}
+                    >
+                      Fail
+                    </button>
+
+                  </>
+
                 )}
+
               </td>
+
             </tr>
+
           ))}
+
         </tbody>
+
       </table>
 
       {/* PAGINATION */}
+
       <div className={styles.pagination}>
+
         <span>
           Showing {(currentPage-1)*rowsPerPage + 1} -
           {Math.min(currentPage*rowsPerPage, filteredAgents.length)}
@@ -230,54 +320,95 @@ export default function ShowResult() {
         </span>
 
         <div className={styles.pageButtons}>
-          <button disabled={currentPage === 1}
-            onClick={()=>setCurrentPage(prev=>prev-1)}>Prev</button>
+
+          <button
+            disabled={currentPage === 1}
+            onClick={()=>setCurrentPage(prev=>prev-1)}
+          >
+            Prev
+          </button>
 
           {Array.from({ length: totalPages }, (_, i) => (
-            <button key={i}
+
+            <button
+              key={i}
               className={currentPage === i+1 ? styles.activePage : ""}
-              onClick={()=>setCurrentPage(i+1)}>
+              onClick={()=>setCurrentPage(i+1)}
+            >
               {i+1}
             </button>
+
           ))}
 
-          <button disabled={currentPage === totalPages}
-            onClick={()=>setCurrentPage(prev=>prev+1)}>Next</button>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={()=>setCurrentPage(prev=>prev+1)}
+          >
+            Next
+          </button>
+
         </div>
+
       </div>
 
       {/* MODAL */}
+
       {showModal && selectedAgent && (
+
         <div className={styles.modalOverlay}>
+
           <div className={styles.modalBox}>
 
-            <button className={styles.closeBtn}
-              onClick={()=>setShowModal(false)}>✖</button>
+            <button
+              className={styles.closeBtn}
+              onClick={()=>setShowModal(false)}
+            >
+              ✖
+            </button>
 
             <h3>Finalize Approval</h3>
 
             {successMsg && (
+
               <div className={styles.successBanner}>
                 {successMsg}
               </div>
+
             )}
 
             <div className={styles.modalActions}>
-              <input type="file"
+
+              <input
+                type="file"
                 onChange={(e)=>{
+
                   const file=e.target.files?.[0];
+
                   if(file) uploadCertificate(file);
-                }}/>
 
-              <button className={styles.reviewBtn}
-                onClick={generatePDF}>Generate Certificate</button>
+                }}
+              />
 
-              <button className={styles.finalAcceptBtn}
-                onClick={approveAgent}>Final Approve</button>
+              <button
+                className={styles.reviewBtn}
+                onClick={generatePDF}
+              >
+                Generate Certificate
+              </button>
+
+              <button
+                className={styles.finalAcceptBtn}
+                onClick={approveAgent}
+              >
+                Final Approve
+              </button>
+
             </div>
 
           </div>
+
         </div>
+
       )}
 
     </div>
