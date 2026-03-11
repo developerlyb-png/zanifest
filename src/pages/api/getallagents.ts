@@ -23,7 +23,7 @@ export default async function handler(
     await dbConnect();
 
     const agents = await Agent.find({})
-.select("_id agentCode firstName lastName email status certificate certificate1 certificate2")
+.select("_id agentCode firstName lastName email status certificate certificate1 certificate2 createdAt updatedAt")
       .limit(0)
       .lean();
 

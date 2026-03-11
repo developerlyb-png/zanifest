@@ -43,6 +43,7 @@ export default function FilterPanel({
       style={{
         position: "absolute",
         left: 0,
+        translate: "306px -485px",
         top: "110%",
         background: "#fff",
         padding: 15,

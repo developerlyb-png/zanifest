@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Select from "react-select";
+
 import styles from "@/styles/components/superadminsidebar/reviewApplications.module.css";
 
 interface AgentData {
@@ -47,12 +49,17 @@ adhaarBackAttachment?: string;
 type VerificationState = "pending" | "approved" | "rejected";
 
 export default function ReviewApplications() {
+  const [managerSearch, setManagerSearch] = useState("");
   const [applications, setApplications] = useState<AgentData[]>([]);
   const [selected, setSelected] = useState<AgentData | null>(null);
   const [managerList, setManagerList] = useState<any[]>([]);
   const [assignManager, setAssignManager] = useState("");
   const [irdaiVerified, setIrdaiVerified] = useState(false);
 const [iibVerified, setIibVerified] = useState(false);
+ const managerOptions = managerList.map((m) => ({
+    value: m.managerId,
+    label: `${m.firstName ?? ""} ${m.lastName ?? ""} (${m.managerId})`,
+  }));
   // local verification states for currently selected agent
   const [panStatus, setPanStatus] = useState<VerificationState>("pending");
   const [aadhaarStatus, setAadhaarStatus] =
@@ -108,6 +115,11 @@ const [iibVerified, setIibVerified] = useState(false);
       setLoading(false);
     }
   };
+  const filteredManagers = managerList.filter((m) =>
+  `${m.firstName || ""} ${m.lastName || ""} ${m.managerId || ""}`
+    .toLowerCase()
+    .includes(managerSearch.toLowerCase())
+);
   const renderPreview = (file?: string) => {
     if (!file)
       return <div className={styles.noPreview}>No document uploaded</div>;
@@ -394,212 +406,193 @@ const [iibVerified, setIibVerified] = useState(false);
               </div>
 
               {/* Documents + verification */}
-              <div className={styles.docsRow}>
-                <div className={styles.docCard}>
-                  <div className={styles.docHeader}>
-                    <strong>PAN Card</strong>
-                    <span className={styles.smallNote}>Preview & verify</span>
-                  </div>
+          {/* Documents + verification */}
+<div className={styles.docsRow}>
 
-                  <div className={styles.docPreviewWrap}>
-                    {selected.panAttachment ? (
-                      selected.panAttachment.startsWith(
-                        "data:application/pdf"
-                      ) ? (
-                        <object
-                          data={selected.panAttachment}
-                          type="application/pdf"
-                          className={styles.docPreview}
-                          onClick={() => openInNewTab(selected.panAttachment)}
-                        />
-                      ) : (
-                        <img
-                          src={
-                            selected.panAttachment.startsWith("data:")
-                              ? selected.panAttachment
-                              : getFileUrl(selected.panAttachment) || ""
-                          }
-                          className={styles.docPreview}
-                          alt="PAN"
-                          onClick={() => openInNewTab(selected.panAttachment)}
-                        />
-                      )
-                    ) : (
-                      <div className={styles.noPreview}>No PAN uploaded</div>
-                    )}
-                  </div>
+  {/* ================= PAN CARD ================= */}
+  <div className={styles.docCard}>
+    <div className={styles.docHeader}>
+      <strong>PAN Card</strong>
+      <span className={styles.smallNote}>Preview & verify</span>
+    </div>
 
-                  {/* <div
-  className={styles.docPreviewWrap}
-  onClick={() => {
-    if (selected.panAttachment)
-      window.open(selected.panAttachment, "_blank");
-  }}
->
-  {renderPreview(selected.panAttachment)}
-</div> */}
-
-                  <div className={styles.verifyRow}>
-                    <button
-                      className={`${styles.verifyAction} ${
-                        panStatus === "approved" ? styles.approved : ""
-                      }`}
-                      onClick={() => setPanApproved()}
-                      disabled={panStatus === "approved"}
-                    >
-                      Approve PAN
-                    </button>
-
-                    <button
-                      className={`${styles.verifyAction} ${styles.reject}`}
-                      onClick={() => setPanRejected()}
-                      disabled={panStatus === "rejected"}
-                    >
-                      Reject PAN
-                    </button>
-
-                    <div className={styles.statusPill}>
-                      {panStatus === "pending" && "Pending"}
-                      {panStatus === "approved" && "Approved"}
-                      {panStatus === "rejected" && "Rejected"}
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.docCard}>
-                  <div className={styles.docHeader}>
-                    <strong>Aadhaar Card</strong>
-                    <span className={styles.smallNote}>Preview & verify</span>
-                  </div>
-                  <div className={styles.docPreviewWrap}>
-                    {selected.adhaarAttachment ? (
-                      selected.adhaarAttachment.startsWith(
-                        "data:application/pdf"
-                      ) ? (
-                        <object
-                          data={selected.adhaarAttachment}
-                          type="application/pdf"
-                          className={styles.docPreview}
-                          onClick={() =>
-                            openInNewTab(selected.adhaarAttachment)
-                          }
-                        />
-                      ) : (
-                        <img
-                          src={
-                            selected.adhaarAttachment.startsWith("data:")
-                              ? selected.adhaarAttachment
-                              : getFileUrl(selected.adhaarAttachment) || ""
-                          }
-                          className={styles.docPreview}
-                          alt="Aadhaar"
-                          onClick={() =>
-                            openInNewTab(selected.adhaarAttachment)
-                          }
-                        />
-                      )
-                    ) : (
-                      <div className={styles.noPreview}>
-                        No Aadhaar uploaded
-                      </div>
-                    )}
-                  </div>
-
-                  {/* <div
-  className={styles.docPreviewWrap}
-  onClick={() => {
-    if (selected.adhaarAttachment)
-      window.open(selected.adhaarAttachment, "_blank");
-  }}
->
-  {renderPreview(selected.adhaarAttachment)}
-</div> */}
-
-                  <div className={styles.verifyRow}>
-                    <button
-                      className={`${styles.verifyAction} ${
-                        aadhaarStatus === "approved" ? styles.approved : ""
-                      }`}
-                      onClick={() => setAadhaarApproved()}
-                      disabled={aadhaarStatus === "approved"}
-                    >
-                      Approve Aadhaar
-                    </button>
-
-                    <button
-                      className={`${styles.verifyAction} ${styles.reject}`}
-                      onClick={() => setAadhaarRejected()}
-                      disabled={aadhaarStatus === "rejected"}
-                    >
-                      Reject Aadhaar
-                    </button>
-
-                    <div className={styles.statusPill}>
-                      {aadhaarStatus === "pending" && "Pending"}
-                      {aadhaarStatus === "approved" && "Approved"}
-                      {aadhaarStatus === "rejected" && "Rejected"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-<div className={styles.docCard}>
-  <div className={styles.docHeader}>
-    <strong>Aadhaar Backside</strong>
-    <span className={styles.smallNote}>Preview & verify</span>
-  </div>
-
-  <div className={styles.docPreviewWrap}>
-    {selected.adhaarBackAttachment ? (
-      selected.adhaarBackAttachment.startsWith("data:application/pdf") ? (
-        <object
-          data={selected.adhaarBackAttachment}
-          type="application/pdf"
-          className={styles.docPreview}
-          onClick={() => openInNewTab(selected.adhaarBackAttachment)}
-        />
+    <div className={styles.docPreviewWrap}>
+      {selected.panAttachment ? (
+        selected.panAttachment.startsWith("data:application/pdf") ? (
+          <object
+            data={selected.panAttachment}
+            type="application/pdf"
+            className={styles.docPreview}
+            onClick={() => openInNewTab(selected.panAttachment)}
+          />
+        ) : (
+          <img
+            src={
+              selected.panAttachment.startsWith("data:")
+                ? selected.panAttachment
+                : getFileUrl(selected.panAttachment) || ""
+            }
+            className={styles.docPreview}
+            alt="PAN"
+            onClick={() => openInNewTab(selected.panAttachment)}
+          />
+        )
       ) : (
-        <img
-          src={
-            selected.adhaarBackAttachment.startsWith("data:")
-              ? selected.adhaarBackAttachment
-              : getFileUrl(selected.adhaarBackAttachment) || ""
-          }
-          className={styles.docPreview}
-          alt="Aadhaar Back"
-          onClick={() => openInNewTab(selected.adhaarBackAttachment)}
-        />
-      )
-    ) : (
-      <div className={styles.noPreview}>No Aadhaar backside uploaded</div>
-    )}
-  </div>
+        <div className={styles.noPreview}>No PAN uploaded</div>
+      )}
+    </div>
 
-  <div className={styles.verifyRow}>
-    <button
-      className={`${styles.verifyAction} ${
-        aadhaarBackStatus === "approved" ? styles.approved : ""
-      }`}
-      onClick={() => setAadhaarBackStatus("approved")}
-      disabled={aadhaarBackStatus === "approved"}
-    >
-      Approve
-    </button>
+    <div className={styles.verifyRow}>
+      <button
+        className={`${styles.verifyAction} ${
+          panStatus === "approved" ? styles.approved : ""
+        }`}
+        onClick={() => setPanApproved()}
+        disabled={panStatus === "approved"}
+      >
+        Approve 
+      </button>
 
-    <button
-      className={`${styles.verifyAction} ${styles.reject}`}
-      onClick={() => setAadhaarBackStatus("rejected")}
-      disabled={aadhaarBackStatus === "rejected"}
-    >
-      Reject
-    </button>
+      <button
+        className={`${styles.verifyAction} ${styles.reject}`}
+        onClick={() => setPanRejected()}
+        disabled={panStatus === "rejected"}
+      >
+        Reject 
+      </button>
 
-    <div className={styles.statusPill}>
-      {aadhaarBackStatus === "pending" && "Pending"}
-      {aadhaarBackStatus === "approved" && "Approved"}
-      {aadhaarBackStatus === "rejected" && "Rejected"}
+      <div className={styles.statusPill}>
+        {panStatus === "pending" && "Pending"}
+        {panStatus === "approved" && "Approved"}
+        {panStatus === "rejected" && "Rejected"}
+      </div>
     </div>
   </div>
+
+
+  {/* ================= AADHAAR FRONT ================= */}
+  <div className={styles.docCard}>
+    <div className={styles.docHeader}>
+      <strong>Aadhaar Frontside</strong>
+      <span className={styles.smallNote}>Preview & verify</span>
+    </div>
+
+    <div className={styles.docPreviewWrap}>
+      {selected.adhaarAttachment ? (
+        selected.adhaarAttachment.startsWith("data:application/pdf") ? (
+          <object
+            data={selected.adhaarAttachment}
+            type="application/pdf"
+            className={styles.docPreview}
+            onClick={() => openInNewTab(selected.adhaarAttachment)}
+          />
+        ) : (
+          <img
+            src={
+              selected.adhaarAttachment.startsWith("data:")
+                ? selected.adhaarAttachment
+                : getFileUrl(selected.adhaarAttachment) || ""
+            }
+            className={styles.docPreview}
+            alt="Aadhaar"
+            onClick={() => openInNewTab(selected.adhaarAttachment)}
+          />
+        )
+      ) : (
+        <div className={styles.noPreview}>No Aadhaar uploaded</div>
+      )}
+    </div>
+
+    <div className={styles.verifyRow}>
+      <button
+        className={`${styles.verifyAction} ${
+          aadhaarStatus === "approved" ? styles.approved : ""
+        }`}
+        onClick={() => setAadhaarApproved()}
+        disabled={aadhaarStatus === "approved"}
+      >
+        Approve 
+      </button>
+
+      <button
+        className={`${styles.verifyAction} ${styles.reject}`}
+        onClick={() => setAadhaarRejected()}
+        disabled={aadhaarStatus === "rejected"}
+      >
+        Reject 
+      </button>
+
+      <div className={styles.statusPill}>
+        {aadhaarStatus === "pending" && "Pending"}
+        {aadhaarStatus === "approved" && "Approved"}
+        {aadhaarStatus === "rejected" && "Rejected"}
+      </div>
+    </div>
+  </div>
+
+
+  {/* ================= AADHAAR BACK ================= */}
+  <div className={styles.docCard}>
+    <div className={styles.docHeader}>
+      <strong>Aadhaar Backside</strong>
+      <span className={styles.smallNote}>Preview & verify</span>
+    </div>
+
+    <div className={styles.docPreviewWrap}>
+      {selected.adhaarBackAttachment ? (
+        selected.adhaarBackAttachment.startsWith("data:application/pdf") ? (
+          <object
+            data={selected.adhaarBackAttachment}
+            type="application/pdf"
+            className={styles.docPreview}
+            onClick={() => openInNewTab(selected.adhaarBackAttachment)}
+          />
+        ) : (
+          <img
+            src={
+              selected.adhaarBackAttachment.startsWith("data:")
+                ? selected.adhaarBackAttachment
+                : getFileUrl(selected.adhaarBackAttachment) || ""
+            }
+            className={styles.docPreview}
+            alt="Aadhaar Back"
+            onClick={() => openInNewTab(selected.adhaarBackAttachment)}
+          />
+        )
+      ) : (
+        <div className={styles.noPreview}>No Aadhaar backside uploaded</div>
+      )}
+    </div>
+
+    <div className={styles.verifyRow}>
+      <button
+        className={`${styles.verifyAction} ${
+          aadhaarBackStatus === "approved" ? styles.approved : ""
+        }`}
+        onClick={() => setAadhaarBackStatus("approved")}
+        disabled={aadhaarBackStatus === "approved"}
+      >
+        Approve 
+      </button>
+
+      <button
+        className={`${styles.verifyAction} ${styles.reject}`}
+        onClick={() => setAadhaarBackStatus("rejected")}
+        disabled={aadhaarBackStatus === "rejected"}
+      >
+        Reject
+      </button>
+
+      <div className={styles.statusPill}>
+        {aadhaarBackStatus === "pending" && "Pending"}
+        {aadhaarBackStatus === "approved" && "Approved"}
+        {aadhaarBackStatus === "rejected" && "Rejected"}
+      </div>
+    </div>
+  </div>
+
 </div>
+
               <div className={styles.docCard}>
                 <div className={styles.docHeader}>
                   <strong>Educational Documents</strong>
@@ -756,23 +749,31 @@ const [iibVerified, setIibVerified] = useState(false);
 
               {/* Assign manager */}
               <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Assign District Manager</label>
-                  <select
-                    className={styles.select}
-                    disabled={!irdaiVerified}
-                    value={assignManager}
-                    onChange={(e) => setAssignManager(e.target.value)}
-                  >
-                    <option value="">Select</option>
-                    {managerList.map((m) => (
-                      <option key={m.managerId} value={m.managerId}>
-                        {m.name} ({m.managerId})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+     <div className={styles.formGroup}>
+  <label>Assign District Manager</label>
 
+  <Select
+    options={managerList.map((m) => ({
+      value: m.managerId,
+      label: `${m.firstName ?? ""} ${m.lastName ?? ""} (${m.managerId})`,
+    }))}
+    isDisabled={!irdaiVerified}
+    placeholder="Search & Select District Manager..."
+    value={
+      managerList
+        .map((m) => ({
+          value: m.managerId,
+          label: `${m.firstName ?? ""} ${m.lastName ?? ""} (${m.managerId})`,
+        }))
+        .find((o) => o.value === assignManager) || null
+    }
+    onChange={(selected) => setAssignManager(selected?.value || "")}
+    isSearchable
+    isClearable
+    classNamePrefix="react-select"
+  />
+
+</div>
                 <div className={styles.formGroup}>
                   <label>IRDAI Verification</label>
                   <div style={{ display: "flex", gap: 8 }}>

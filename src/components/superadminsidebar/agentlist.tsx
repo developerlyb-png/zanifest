@@ -4,6 +4,8 @@ import Image from "next/image";
 import axios from "axios";
 import { FaEdit } from "react-icons/fa";
 import { toast } from "react-hot-toast";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import { Modal, Input, message } from "antd";
 
 interface Agent {
@@ -278,7 +280,38 @@ const AgentsPage: React.FC = () => {
     setSearchQuery("");
     setCurrentPage(1);
   };
+const exportToExcel = () => {
 
+  const excelData = filteredAgents.map((agent, index) => ({
+    "S.No": index + 1,
+    "Agent Code": agent.agentCode,
+    "Name": `${agent.firstName} ${agent.lastName}`,
+    "Email": agent.email,
+    "District": agent.district,
+    "City": agent.city,
+    "State": agent.state,
+    "Assigned To": agent.assignedTo || "Not Assigned",
+    "Lifetime Sales": agent.sales || 0,
+    "Status": agent.accountStatus
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Agents");
+
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array"
+  });
+
+  const file = new Blob([excelBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+
+  saveAs(file, "Agents_List.xlsx");
+};
   // -------------------- JSX --------------------
   return (
     <div className={styles.container}>
@@ -375,6 +408,13 @@ const AgentsPage: React.FC = () => {
           <button className={styles.resetButton} onClick={handleResetFilters}>
             Reset
           </button>
+           <button
+    onClick={exportToExcel}
+    className={styles.excelBtn}
+  >
+    Export Excel
+  </button>
+
         </div>
         <div className={styles.rightSearch}>
          <Input

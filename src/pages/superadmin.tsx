@@ -402,7 +402,7 @@ const SuperAdminDashboard = () => {
 >
   <span className={styles.iconLabel}>
     <FiList className={styles.icon} />
-    <span className={styles.label}>Show Result</span>
+    <span className={styles.label}>POS Certificate</span>
   </span>
 </li>
 

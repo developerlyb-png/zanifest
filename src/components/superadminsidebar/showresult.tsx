@@ -4,413 +4,426 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import styles from "@/styles/components/superadminsidebar/reviewApplications.module.css";
 
+import { FaEye } from "react-icons/fa";
+import { FaDownload } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa";
+import { FaFilter } from "react-icons/fa";
+import FilterPanel from "@/components/superadminsidebar/FilterPanel";
+
 export default function ShowResult() {
 
-  const [agents, setAgents] = useState<any[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedAgent, setSelectedAgent] = useState<any>(null);
+const [resultUploaded, setResultUploaded] = useState(false);
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+const [agents, setAgents] = useState<any[]>([]);
+const [showModal, setShowModal] = useState(false);
+const [selectedAgent, setSelectedAgent] = useState<any>(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+const [search, setSearch] = useState("");
+const [statusFilter, setStatusFilter] = useState("all");
 
-  const [successMsg, setSuccessMsg] = useState("");
+const [currentPage, setCurrentPage] = useState(1);
+const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const loadAgents = async () => {
-    const res = await axios.get("/api/getallagents");
-    setAgents(res.data || []);
-  };
+const [successMsg, setSuccessMsg] = useState("");
 
-  useEffect(() => {
-    loadAgents();
-  }, []);
+/* ---------------- ADVANCED FILTER STATES ---------------- */
 
-  // ⭐ FINAL APPROVE
-  const approveAgent = async () => {
+const [showFilter, setShowFilter] = useState(false);
 
-    const freshAgent = agents.find(a => a._id === selectedAgent._id);
+const [filters, setFilters] = useState([
+  { field: "", condition: "is", value: "" },
+]);
 
-    if (!freshAgent?.certificate2) {
-      alert("Please generate or upload certificate first");
-      return;
-    }
+const [operator, setOperator] = useState<"AND" | "OR">("AND");
 
-    await axios.post("/api/updateStatus", {
-      id: selectedAgent._id,
-      status: "approved"
+const updateFilter = (
+  index: number,
+  key: "field" | "condition" | "value",
+  value: string
+) => {
+  const updated = [...filters];
+  updated[index][key] = value;
+  setFilters(updated);
+};
+
+const addFilter = () => {
+  setFilters([...filters, { field: "", condition: "is", value: "" }]);
+};
+
+const removeFilter = (index: number) => {
+  const updated = filters.filter((_, i) => i !== index);
+  setFilters(updated);
+};
+
+const clearFilters = () => {
+  setFilters([{ field: "", condition: "is", value: "" }]);
+};
+
+/* ---------------- LOAD AGENTS ---------------- */
+
+const loadAgents = async () => {
+  const res = await axios.get("/api/getallagents");
+  setAgents(res.data || []);
+};
+
+useEffect(() => {
+  loadAgents();
+}, []);
+
+/* ---------------- APPROVE ---------------- */
+
+const approveAgent = async () => {
+
+  const freshAgent = agents.find(a => a._id === selectedAgent._id);
+
+  if (!freshAgent?.certificate2) {
+    alert("Please generate or upload certificate first");
+    return;
+  }
+
+  await axios.post("/api/updateStatus", {
+    id: selectedAgent._id,
+    status: "approved"
+  });
+
+  setSuccessMsg("Agent approved successfully ✅");
+  loadAgents();
+};
+
+/* ---------------- FAIL ---------------- */
+
+const failAgent = async (agent:any) => {
+
+  if(!confirm("Are you sure you want to mark this agent as Failed?")) return;
+
+  await axios.post("/api/updateStatus", {
+    id: agent._id,
+    status: "failed"
+  });
+
+  loadAgents();
+};
+
+/* ---------------- GENERATE PDF ---------------- */
+
+const generatePDF = async () => {
+
+  await axios.post("/api/createCertificate", {
+    agentId: selectedAgent._id
+  });
+
+  await loadAgents();
+
+  setSuccessMsg("Certificate generated successfully ✅");
+};
+
+/* ---------------- UPLOAD CERTIFICATE ---------------- */
+
+const uploadCertificate = async (file: File) => {
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("agentId", selectedAgent._id);
+
+  await axios.post("/api/uploadCertificate", formData);
+
+  await loadAgents();
+
+  setSuccessMsg("Certificate uploaded successfully ✅");
+};
+
+/* ---------------- DOWNLOAD ---------------- */
+
+const downloadFile = (url: string) => {
+
+  const link = document.createElement("a");
+
+  link.href = `${window.location.origin}${url}`;
+  link.download = "";
+
+  link.click();
+};
+
+/* ---------------- FILTER ---------------- */
+
+const filteredAgents = useMemo(() => {
+
+  return agents
+
+  .filter(a =>
+    a.status === "reviewed" ||
+    a.status === "approved" ||
+    a.status === "failed"
+  )
+
+  .filter(a => {
+
+    const matchesSearch =
+      a.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+      a.lastName?.toLowerCase().includes(search.toLowerCase()) ||
+      a.email?.toLowerCase().includes(search.toLowerCase()) ||
+      a.agentCode?.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" || a.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+
+  })
+
+  .filter((a)=>{
+
+    if(filters.length === 0) return true;
+
+    const results = filters.map((f)=>{
+
+      if(!f.field || !f.value) return true;
+
+      const fieldValue = a[f.field]?.toString().toLowerCase();
+      const value = f.value.toLowerCase();
+
+      if(f.condition === "contains") return fieldValue?.includes(value);
+
+      if(f.condition === "is") return fieldValue === value;
+
+      return true;
     });
 
-    setSuccessMsg("Agent approved successfully ✅");
-    loadAgents();
-  };
+    return operator === "AND"
+      ? results.every(Boolean)
+      : results.some(Boolean);
+
+  });
+
+}, [agents, search, statusFilter, filters, operator]);
+
+/* ---------------- PAGINATION ---------------- */
+
+const totalPages = Math.ceil(filteredAgents.length / rowsPerPage);
+
+const paginatedAgents = filteredAgents.slice(
+  (currentPage - 1) * rowsPerPage,
+  currentPage * rowsPerPage
+);
+
+const statusBadge = (status:string) => {
+
+  if(status === "approved") return styles.badgeApproved;
+
+  if(status === "reviewed") return styles.badgeReviewed;
+
+  if(status === "failed") return styles.badgeFailed;
+
+  return styles.badgePending;
+};
+
+return (
+<div className={styles.pageWrapper}>
+
+<h2 className={styles.title}>POS Certificate</h2>
+
+{/* FILTER BAR */}
+
+<div className={styles.filterBar}>
 
-  // ⭐ FAIL AGENT
-  const failAgent = async (agent:any) => {
+<div style={{ position:"relative" }}>
+
+<button
+  className={styles.filterBtn}
+  onClick={() => setShowFilter(!showFilter)}
+>
+  <FaFilter style={{ marginRight: 6 }} />
+  Filter
+</button>
 
-    if(!confirm("Are you sure you want to mark this agent as Failed?")) return;
+</div>
 
-    await axios.post("/api/updateStatus", {
-      id: agent._id,
-      status: "failed"
-    });
+<FilterPanel
+showFilter={showFilter}
+setShowFilter={setShowFilter}
+filters={filters}
+operator={operator}
+updateFilter={updateFilter}
+addFilter={addFilter}
+removeFilter={removeFilter}
+clearFilters={clearFilters}
+setOperator={setOperator}
+/>
+
+{/* <input
+placeholder="Search agent..."
+className={styles.searchInput}
+value={search}
+onChange={(e)=>{
+setSearch(e.target.value);
+setCurrentPage(1);
+}}
+/> */}
+
+{/* <select
+className={styles.select}
+value={statusFilter}
+onChange={(e)=>{
+setStatusFilter(e.target.value);
+setCurrentPage(1);
+}}
+>
+<option value="all">Select Status</option>
+<option value="reviewed">Reviewed</option>
+<option value="approved">Approved</option>
+<option value="failed">Failed</option>
+</select> */}
+
+{/* <select
+className={styles.select}
+value={rowsPerPage}
+onChange={(e)=>{
+setRowsPerPage(Number(e.target.value));
+setCurrentPage(1);
+}}
+>
+<option value={5}>5</option>
+<option value={10}>10</option>
+<option value={20}>20</option>
+</select> */}
+
+</div>
 
-    loadAgents();
-  };
+{/* TABLE */}
 
-  // ⭐ GENERATE PDF
-  const generatePDF = async () => {
+<table className={styles.table}>
+<thead>
 
-    await axios.post("/api/createCertificate", {
-      agentId: selectedAgent._id
-    });
+<tr>
+<th>Date</th>
+<th>Agent Code</th>
+<th>Name</th>
+<th>Email</th>
+<th>Status</th>
+<th>Result</th>
+<th>Certificate</th>
+<th>Pass /Fail</th>
+</tr>
 
-    await loadAgents();
+</thead>
 
-    setSuccessMsg("Certificate generated successfully ✅");
-  };
+<tbody>
 
-  // ⭐ UPLOAD CERTIFICATE
-  const uploadCertificate = async (file: File) => {
+{paginatedAgents.map((agent) => (
 
-    const formData = new FormData();
+<tr key={agent._id} className={styles.tableRow}>
 
-    formData.append("file", file);
-    formData.append("agentId", selectedAgent._id);
+<td>
+{agent.createdAt
+? new Date(agent.createdAt).toLocaleDateString("en-IN")
+: "-"}
+</td>
 
-    await axios.post("/api/uploadCertificate", formData);
+<td>{agent.agentCode || "-"}</td>
 
-    await loadAgents();
+<td>{agent.firstName} {agent.lastName}</td>
 
-    setSuccessMsg("Certificate uploaded successfully ✅");
-  };
+<td>{agent.email}</td>
 
-  const downloadFile = (url: string) => {
+<td>
+<span className={`${styles.statusBadge} ${statusBadge(agent.status)}`}>
+{agent.status}
+</span>
+</td>
 
-    const link = document.createElement("a");
+<td>
 
-    link.href = `${window.location.origin}${url}`;
-    link.download = "";
+{agent.certificate1 ? (
 
-    link.click();
-  };
+<>
+<button
+className={styles.reviewBtn}
+onClick={()=>window.open(agent.certificate1,"_blank")}
+>
+<FaEye/>
+</button>
 
-  // ⭐ FILTER
-  const filteredAgents = useMemo(() => {
+<button
+className={styles.reviewBtn}
+style={{marginLeft:5}}
+onClick={()=>downloadFile(agent.certificate1)}
+>
+<FaDownload/>
+</button>
+</>
 
-    return agents
-      .filter(a =>
-        a.status === "reviewed" ||
-        a.status === "approved" ||
-        a.status === "failed"
-      )
-      .filter(a => {
+) : "—"}
 
-        const matchesSearch =
-          a.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-          a.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-          a.email?.toLowerCase().includes(search.toLowerCase()) ||
-          a.agentCode?.toLowerCase().includes(search.toLowerCase());
+</td>
 
-        const matchesStatus =
-          statusFilter === "all" || a.status === statusFilter;
+<td>
 
-        return matchesSearch && matchesStatus;
-      });
+{agent.certificate2 ? (
 
-  }, [agents, search, statusFilter]);
+<>
+<button
+className={styles.reviewBtn}
+onClick={()=>window.open(agent.certificate2,"_blank")}
+>
+<FaEye/>
+</button>
 
-  const totalPages = Math.ceil(filteredAgents.length / rowsPerPage);
+<button
+className={styles.reviewBtn}
+style={{marginLeft:5}}
+onClick={()=>downloadFile(agent.certificate2)}
+>
+<FaDownload/>
+</button>
+</>
 
-  const paginatedAgents = filteredAgents.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+) : "—"}
 
-  const statusBadge = (status:string) => {
+</td>
 
-    if(status === "approved") return styles.badgeApproved;
+<td>
 
-    if(status === "reviewed") return styles.badgeReviewed;
+{agent.status === "reviewed" && (
 
-    if(status === "failed") return styles.badgeFailed;
+<>
 
-    return styles.badgePending;
-  };
+<button
+className={styles.reviewBtn}
+style={{ background:"transparent", border:"none" }}
+onClick={()=>{
 
-  return (
-    <div className={styles.pageWrapper}>
+setSelectedAgent(agent);
+setSuccessMsg("");
+setShowModal(true);
 
-      <h2 className={styles.title}>Show Result</h2>
-
-      {/* FILTER */}
-      <div className={styles.filterBar}>
-
-        <input
-          placeholder="Search agent..."
-          className={styles.searchInput}
-          value={search}
-          onChange={(e)=>{
-            setSearch(e.target.value);
-            setCurrentPage(1);
-          }}
-        />
-
-        <select
-          className={styles.select}
-          value={statusFilter}
-          onChange={(e)=>{
-            setStatusFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-        >
-          <option value="all">Select Status</option>
-          <option value="reviewed">Reviewed</option>
-          <option value="approved">Approved</option>
-          <option value="failed">Failed</option>
-        </select>
-
-        <select
-          className={styles.select}
-          value={rowsPerPage}
-          onChange={(e)=>{
-            setRowsPerPage(Number(e.target.value));
-            setCurrentPage(1);
-          }}
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-        </select>
-
-      </div>
-
-      {/* TABLE */}
-      <table className={styles.table}>
-
-        <thead>
-
-          <tr>
-            <th>Agent Code</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Result</th>
-            <th>Certificate</th>
-            <th>Action</th>
-          </tr>
-
-        </thead>
-
-        <tbody>
-
-          {paginatedAgents.map((agent) => (
-
-            <tr key={agent._id} className={styles.tableRow}>
-
-              <td>{agent.agentCode || "-"}</td>
-
-              <td>
-                {agent.firstName} {agent.lastName}
-              </td>
-
-              <td>{agent.email}</td>
-
-              <td>
-                <span className={`${styles.statusBadge} ${statusBadge(agent.status)}`}>
-                  {agent.status}
-                </span>
-              </td>
-
-              <td>
-                {agent.certificate1 ? (
-                  <>
-                    <button
-                      className={styles.reviewBtn}
-                      onClick={()=>window.open(agent.certificate1,"_blank")}
-                    >
-                      View
-                    </button>
-
-                    <button
-                      className={styles.reviewBtn}
-                      style={{marginLeft:5}}
-                      onClick={()=>downloadFile(agent.certificate1)}
-                    >
-                      Download
-                    </button>
-                  </>
-                ) : "—"}
-              </td>
-
-              <td>
-                {agent.certificate2 ? (
-                  <>
-                    <button
-                      className={styles.reviewBtn}
-                      onClick={()=>window.open(agent.certificate2,"_blank")}
-                    >
-                      View
-                    </button>
-
-                    <button
-                      className={styles.reviewBtn}
-                      style={{marginLeft:5}}
-                      onClick={()=>downloadFile(agent.certificate2)}
-                    >
-                      Download
-                    </button>
-                  </>
-                ) : "—"}
-              </td>
-
-              <td>
-
-                {agent.status === "reviewed" && (
-
-                  <>
-
-                    {/* PASS */}
-                    <button
-                      className={styles.reviewBtn}
-                      onClick={()=>{
-
-                        setSelectedAgent(agent);
-
-                        setSuccessMsg("");
-
-                        setShowModal(true);
-                      }}
-                    >
-                      Pass
-                    </button>
-
-                    {/* FAIL */}
-                    <button
-                      className={styles.failBtn}
-                      style={{marginLeft:5}}
-                      onClick={()=>failAgent(agent)}
-                    >
-                      Fail
-                    </button>
-
-                  </>
-
-                )}
-
-              </td>
-
-            </tr>
-
-          ))}
-
-        </tbody>
-
-      </table>
-
-      {/* PAGINATION */}
-
-      <div className={styles.pagination}>
-
-        <span>
-          Showing {(currentPage-1)*rowsPerPage + 1} -
-          {Math.min(currentPage*rowsPerPage, filteredAgents.length)}
-          {" "}of {filteredAgents.length}
-        </span>
-
-        <div className={styles.pageButtons}>
-
-          <button
-            disabled={currentPage === 1}
-            onClick={()=>setCurrentPage(prev=>prev-1)}
-          >
-            Prev
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => (
-
-            <button
-              key={i}
-              className={currentPage === i+1 ? styles.activePage : ""}
-              onClick={()=>setCurrentPage(i+1)}
-            >
-              {i+1}
-            </button>
-
-          ))}
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={()=>setCurrentPage(prev=>prev+1)}
-          >
-            Next
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* MODAL */}
-
-      {showModal && selectedAgent && (
-
-        <div className={styles.modalOverlay}>
-
-          <div className={styles.modalBox}>
-
-            <button
-              className={styles.closeBtn}
-              onClick={()=>setShowModal(false)}
-            >
-              ✖
-            </button>
-
-            <h3>Finalize Approval</h3>
-
-            {successMsg && (
-
-              <div className={styles.successBanner}>
-                {successMsg}
-              </div>
-
-            )}
-
-            <div className={styles.modalActions}>
-
-              <input
-                type="file"
-                onChange={(e)=>{
-
-                  const file=e.target.files?.[0];
-
-                  if(file) uploadCertificate(file);
-
-                }}
-              />
-
-              <button
-                className={styles.reviewBtn}
-                onClick={generatePDF}
-              >
-                Generate Certificate
-              </button>
-
-              <button
-                className={styles.finalAcceptBtn}
-                onClick={approveAgent}
-              >
-                Final Approve
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-    </div>
-  );
+}}
+>
+<FaCheck style={{ color:"#21cc5a", fontSize:18 }}/>
+</button>
+
+<button
+className={styles.reviewBtn}
+style={{ background:"transparent", border:"none", marginLeft:5 }}
+onClick={()=>failAgent(agent)}
+>
+<FaTimes style={{ color:"#ef4444", fontSize:18 }}/>
+</button>
+
+</>
+
+)}
+
+</td>
+
+</tr>
+
+))}
+
+</tbody>
+</table>
+
+</div>
+);
 }
