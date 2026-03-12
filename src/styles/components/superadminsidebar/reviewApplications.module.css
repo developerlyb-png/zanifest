@@ -478,3 +478,7 @@
   border: 1px solid #22c55e;
 }
 
+.disabledStatus {
+  opacity: 0.5;
+  pointer-events: none;
+}

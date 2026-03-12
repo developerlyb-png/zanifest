@@ -6,6 +6,7 @@ import { FaEdit } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import FilterPanel from "@/components/superadminsidebar/FilterPanel";
 import { Modal, Input, message } from "antd";
 
 interface Agent {
@@ -412,7 +413,7 @@ const exportToExcel = () => {
     onClick={exportToExcel}
     className={styles.excelBtn}
   >
-    Export Excel
+    Download Report
   </button>
 
         </div>

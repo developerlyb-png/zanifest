@@ -1,63 +1,81 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import dbConnect from '@/lib/dbConnect';
-import Admin from '@/models/Admin';
-import jwt from 'jsonwebtoken';
-import { parse } from 'cookie';
-import bcrypt from 'bcryptjs';
+import type { NextApiRequest, NextApiResponse } from "next";
+import dbConnect from "@/lib/dbConnect";
+import Agent from "@/models/Agent";
+import jwt from "jsonwebtoken";
+import { parse } from "cookie";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+
   await dbConnect();
 
-  if (req.method !== 'PATCH') {
-    return res.status(405).json({ message: 'Method not allowed' });
+  if (req.method !== "PATCH") {
+    return res.status(405).json({ message: "Method not allowed" });
   }
 
   try {
-    const cookies = parse(req.headers.cookie || '');
+
+    const cookies = parse(req.headers.cookie || "");
     const token = cookies.adminToken;
 
     if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
+      return res.status(401).json({ message: "No token provided" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+
     if (!decoded?.id) {
-      return res.status(401).json({ message: 'Invalid token' });
+      return res.status(401).json({ message: "Invalid token" });
     }
 
-    // Match your frontend fields
+    const { agentId } = req.body;
+
+    if (!agentId) {
+      return res.status(400).json({ message: "Agent ID required" });
+    }
+
+    // editable fields
     const allowedFields = [
-      'userFirstName',
-      'userLastName',
-      'email',
-      'password'
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "city",
+      "district",
+      "state",
+      "panNumber",
+      "adhaarNumber",
+      "yearofpassing10th",
+      "yearofpassing12th"
     ];
 
     const updates: any = {};
 
     for (const field of allowedFields) {
-      if (req.body[field] !== undefined && req.body[field] !== '') {
+      if (req.body[field] !== undefined) {
         updates[field] = req.body[field];
       }
     }
 
-    // If password is being updated, hash it
-    if (updates.password) {
-      updates.password = await bcrypt.hash(updates.password, 10);
+    const updatedAgent = await Agent.findByIdAndUpdate(
+      agentId,
+      updates,
+      { new: true }
+    ).lean();
+
+    if (!updatedAgent) {
+      return res.status(404).json({ message: "Agent not found" });
     }
 
-    const updated = await Admin.findByIdAndUpdate(decoded.id, updates, {
-      new: true,
-    }).lean();
+    return res.status(200).json({
+      message: "Agent updated successfully",
+      agent: updatedAgent
+    });
 
-    if (!updated) {
-      return res.status(404).json({ message: 'Manager not found' });
-    }
+  } catch (error) {
 
-    delete (updated as any).password;
-    return res.status(200).json({ message: 'Profile updated', manager: updated });
-  } catch (err) {
-    console.error('PATCH /api/manager/updateadmin Error:', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error("PATCH /api/admin/updateAgent Error:", error);
+
+    return res.status(500).json({ message: "Server error" });
+
   }
 }

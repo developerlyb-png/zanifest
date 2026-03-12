@@ -113,15 +113,22 @@ const FileInput: React.FC<FileInputProps> = ({
 /* ================= MAIN ================= */
 const CreateAgent = () => {
   const searchParams = useSearchParams();
-  const loginId = searchParams.get("loginId");
+  const urlLoginId = searchParams.get("loginId");
   const isEditMode = searchParams.get("mode") === "edit";
+  const router = useRouter();
+
+  const [loginId, setLoginId] = useState<string | null>(urlLoginId);
+
+  useEffect(() => {
+    if (urlLoginId) {
+      setLoginId(urlLoginId);
+      router.replace("/createagent");
+    }
+  }, [urlLoginId]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
-  const [rejectedFields, setRejectedFields] = useState<(keyof FormDataType)[]>(
-    []
-  );
-
-  const router = useRouter();
+  const [rejectedFields, setRejectedFields] = useState<(keyof FormDataType)[]>([]);
 
   const [step, setStep] = useState(1);
 const totalSteps = 5;
@@ -578,7 +585,7 @@ const handleProfileImageChange = async (
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className={step === 1 ? styles.basicDetailsGrid : ""}>
         {step === 1 && (
           <>
             <h3>Basic Details</h3>
@@ -609,14 +616,23 @@ const handleProfileImageChange = async (
               }
               className={errors.phone ? styles.errorInput : ""}
             />
-              <div className={styles.fileUpload}>
-  <label>Upload Profile Image</label>
+       <div className={styles.fileUpload}>
+  <label className={styles.fileBox}>
+    <span className={styles.fileBtn}>Choose File</span>
 
-  <input
-    type="file"
-    accept="image/png,image/jpeg,image/webp,image/gif"
-    onChange={handleProfileImageChange}
-  />
+    <span className={styles.fileText}>
+      {formData.profileImage
+        ? "File selected"
+        : "Upload your profile picture"}
+    </span>
+
+    <input
+      type="file"
+      accept="image/png,image/jpeg,image/webp,image/gif"
+      onChange={handleProfileImageChange}
+      hidden
+    />
+  </label>
 </div>
                      
             <div className={styles.passwordWrapper}>
@@ -635,146 +651,250 @@ const handleProfileImageChange = async (
           </>
         )}
 
-        {step === 2 && (
+  {step === 2 && (
   <>
     <h3>Address & KYC</h3>
 
-    <input
-      placeholder="Pin Code"
-      value={formData.pinCode}
-      onChange={handlePincodeChange}
-      className={errors.pinCode ? styles.errorInput : ""}
-    />
+    <div className={styles.step2Grid}>
+      <input
+        placeholder="Pin Code"
+        value={formData.pinCode}
+        onChange={handlePincodeChange}
+        className={errors.pinCode ? styles.errorInput : ""}
+      />
 
-    <input placeholder="City" value={formData.city} disabled />
-    <input placeholder="State" value={formData.state} disabled />
+      <input placeholder="City" value={formData.city} disabled />
 
-    <input
-      id="panNumber"
-      placeholder="PAN Number"
-      value={formData.panNumber}
-      onChange={(e) =>
-        setFormData((p) => ({
-          ...p,
-          panNumber: formatPAN(e.target.value),
-        }))
-      }
-      className={errors.panNumber ? styles.errorInput : ""}
-    />
+      <input
+        placeholder="State"
+        value={formData.state}
+        disabled
+        className={styles.fullWidth}
+      />
 
-    <FileInput
-      label="Upload PAN (Max upload size 500kb)"
-      name="panAttachment"
-      fileName={attachments.panFileName}
-      onChange={handleFileChange}
-      error={!!errors.panAttachment}
-    />
+      <input
+        id="panNumber"
+        placeholder="PAN Number"
+        value={formData.panNumber}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            panNumber: formatPAN(e.target.value),
+          }))
+        }
+        className={errors.panNumber ? styles.errorInput : ""}
+      />
 
-    <input
-      id="adhaarNumber"
-      placeholder="Aadhaar Number"
-      disabled={isLocked("adhaarNumber")}
-      value={formData.adhaarNumber}
-      onChange={(e) =>
-        setFormData((p) => ({
-          ...p,
-          adhaarNumber: formatAadhaar(e.target.value),
-        }))
-      }
-      className={errors.adhaarNumber ? styles.errorInput : ""}
-    />
+      {/* PAN Upload */}
+      <div className={styles.fileUpload}>
+        <label className={styles.fileBox}>
+          <span className={styles.fileBtn}>Choose File</span>
 
-    <FileInput
-      label="Upload Aadhaar Front (Max upload size 500kb)"
-      name="adhaarAttachment"
-      fileName={attachments.adhaarFileName}
-      onChange={handleFileChange}
-      error={!!errors.adhaarAttachment}
-    />
+          <span className={styles.fileText}>
+            {attachments.panAttachment
+              ? "File selected"
+              : "Upload PAN"}
+          </span>
 
-    {/* ✅ Aadhaar Backside Upload */}
-    <FileInput
-      label="Upload Aadhaar Backside (Max upload size 500kb)"
-      name="adhaarBackAttachment"
-      fileName={attachments.adhaarBackFileName}
-      onChange={handleFileChange}
-      error={!!errors.adhaarBackAttachment}
-    />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            name="panAttachment"
+            hidden
+          />
+        </label>
+      </div>
+
+      <input
+        id="adhaarNumber"
+        placeholder="Aadhaar Number"
+        disabled={isLocked("adhaarNumber")}
+        value={formData.adhaarNumber}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            adhaarNumber: formatAadhaar(e.target.value),
+          }))
+        }
+        className={`${styles.fullWidth} ${
+          errors.adhaarNumber ? styles.errorInput : ""
+        }`}
+      />
+
+      {/* Aadhaar Front */}
+      <div className={styles.fileUpload}>
+        <label className={styles.fileBox}>
+          <span className={styles.fileBtn}>Choose File</span>
+
+          <span className={styles.fileText}>
+            {attachments.adhaarAttachment
+              ? "File selected"
+              : "Upload Aadhaar Front "}
+          </span>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            name="adhaarAttachment"
+            hidden
+          />
+        </label>
+      </div>
+
+      {/* Aadhaar Back */}
+      <div className={styles.fileUpload}>
+        <label className={styles.fileBox}>
+          <span className={styles.fileBtn}>Choose File</span>
+
+          <span className={styles.fileText}>
+            {attachments.adhaarBackAttachment
+              ? "File selected"
+              : "Upload Aadhaar Backside "}
+          </span>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            name="adhaarBackAttachment"
+            hidden
+          />
+        </label>
+      </div>
+    </div>
   </>
 )}
 {step === 3 && (
   <>
     <h3>Education Details</h3>
 
-    {/* ===== 10th Passing Year ===== */}
-    <input
-      id="yearofpassing10th"
-      placeholder="10th Passing Year (e.g. 2019)"
-      value={formData.yearofpassing10th || ""}
-      onChange={(e) =>
-        setFormData((p) => ({
-          ...p,
-          yearofpassing10th: onlyDigits(e.target.value, 4),
-        }))
-      }
-      className={errors.yearofpassing10th ? styles.errorInput : ""}
-    />
+    <div className={styles.step2Grid}>
+      
+      {/* 10th Passing Year */}
+      <select
+        id="yearofpassing10th"
+        value={formData.yearofpassing10th || ""}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            yearofpassing10th: e.target.value,
+            yearofpassing12th: "" // reset 12th
+          }))
+        }
+        className={errors.yearofpassing10th ? styles.errorInput : ""}
+      >
+        <option value="">Select 10th Passing Year</option>
 
-    {/* ===== 10th Marksheet Upload ===== */}
-   <FileInput
-  label="Upload 10th Marksheet (Max upload size 200kb)"
-  name="tenthMarksheetAttachment"
-  fileName={attachments.tenthMarksheetFileName}
-  onChange={handleFileChange}
-  error={!!errors.tenthMarksheetAttachment}
-/>
+        {Array.from({ length: 2025 - 1970 + 1 }, (_, i) => {
+          const year = 1970 + i;
+          return (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          );
+        })}
+      </select>
 
-    {/* ===== 12th Passing Year ===== */}
-    <input
-      id="yearofpassing12th"
-      placeholder="12th Passing Year (e.g. 2021)"
-      value={formData.yearofpassing12th || ""}
-      onChange={(e) =>
-        setFormData((p) => ({
-          ...p,
-          yearofpassing12th: onlyDigits(e.target.value, 4),
-        }))
-      }
-      className={errors.yearofpassing12th ? styles.errorInput : ""}
-    />
 
-    {/* ===== 12th Marksheet Upload ===== */}
-    <FileInput
-  label="Upload 12th Marksheet (Max upload size 200kb)"
-  name="twelfthMarksheetAttachment"
-  fileName={attachments.twelfthMarksheetFileName}
-  onChange={handleFileChange}
-  error={!!errors.twelfthMarksheetAttachment}
-/>
+      {/* 10th Marksheet Upload */}
+      <div className={styles.fileUpload}>
+        <label className={styles.fileBox}>
+          <span className={styles.fileBtn}>Choose File</span>
+
+          <span className={styles.fileText}>
+            {attachments.tenthMarksheetAttachment
+              ? "File selected"
+              : "Upload 10th Marksheet"}
+          </span>
+
+          <input
+            type="file"
+            name="tenthMarksheetAttachment"
+            onChange={handleFileChange}
+            hidden
+          />
+        </label>
+      </div>
+
+
+      {/* 12th Passing Year */}
+      <select
+        id="yearofpassing12th"
+        value={formData.yearofpassing12th || ""}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            yearofpassing12th: e.target.value
+          }))
+        }
+        className={errors.yearofpassing12th ? styles.errorInput : ""}
+      >
+        <option value="">Select 12th Passing Year</option>
+
+        {formData.yearofpassing10th &&
+          Array.from(
+            { length: 2025 - (Number(formData.yearofpassing10th) + 2) + 1 },
+            (_, i) => {
+              const year = Number(formData.yearofpassing10th) + 2 + i;
+              return (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              );
+            }
+          )}
+      </select>
+
+
+      {/* 12th Marksheet Upload */}
+      <div className={styles.fileUpload}>
+        <label className={styles.fileBox}>
+          <span className={styles.fileBtn}>Choose File</span>
+
+          <span className={styles.fileText}>
+            {attachments.twelfthMarksheetAttachment
+              ? "File selected"
+              : "Upload 12th Marksheet"}
+          </span>
+
+          <input
+            type="file"
+            name="twelfthMarksheetAttachment"
+            onChange={handleFileChange}
+            hidden
+          />
+        </label>
+      </div>
+
+    </div>
   </>
 )}
 
 
 
-     {step === 4 && (
+    {step === 4 && (
   <>
     <h3>Nominee Details</h3>
 
-    <input
-      id="nomineeName"
-      placeholder="Nominee Name"
-      value={formData.nomineeName}
-      onChange={handleChange}
-      className={errors.nomineeName ? styles.errorInput : ""}
-    />
+    <div className={styles.step2Grid}>
+      <input
+        id="nomineeName"
+        placeholder="Nominee Name"
+        value={formData.nomineeName}
+        onChange={handleChange}
+        className={errors.nomineeName ? styles.errorInput : ""}
+      />
 
-    <input
-      id="nomineeRelation"
-      placeholder="Relation"
-      value={formData.nomineeRelation}
-      onChange={handleChange}
-      className={errors.nomineeRelation ? styles.errorInput : ""}
-    />
+      <input
+        id="nomineeRelation"
+        placeholder="Relation"
+        value={formData.nomineeRelation}
+        onChange={handleChange}
+        className={errors.nomineeRelation ? styles.errorInput : ""}
+      />
+    </div>
 
     {/* Nominee PAN (Hidden) */}
     {false && (
@@ -831,94 +951,115 @@ const handleProfileImageChange = async (
 )}
 
         {step === 5 && (
-          <>
-            <h3>Bank Details</h3>
-            <input
-              id="accountHolderName"
-              placeholder="Account Holder Name"
-              value={formData.accountHolderName}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  accountHolderName: onlyLetters(e.target.value),
-                }))
-              }
-              className={
-                submittedStep === 4 && errors.accountHolderName
-                  ? styles.errorInput
-                  : ""
-              }
-            />
-            <input
-              id="bankName"
-              placeholder="Bank Name"
-              value={formData.bankName}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  bankName: onlyLetters(e.target.value),
-                }))
-              }
-              className={
-                submittedStep === 4 && errors.bankName ? styles.errorInput : ""
-              }
-            />
-            <input
-              id="accountNumber"
-              placeholder="Account Number"
-              value={formData.accountNumber}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  accountNumber: onlyDigits(e.target.value, 18),
-                }))
-              }
-              className={
-                submittedStep === 4 && errors.accountNumber
-                  ? styles.errorInput
-                  : ""
-              }
-            />
-            <input
-              id="ifscCode"
-              placeholder="IFSC Code"
-              value={formData.ifscCode}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  ifscCode: formatIFSC(e.target.value),
-                }))
-              }
-              className={
-                submittedStep === 4 && errors.ifscCode ? styles.errorInput : ""
-              }
-            />
-            <input
-              id="branchLocation"
-              placeholder="Branch Location"
-              value={formData.branchLocation}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  branchLocation: onlyLettersWithHyphen(e.target.value),
-                }))
-              }
-              className={
-                submittedStep === 4 && errors.branchLocation
-                  ? styles.errorInput
-                  : ""
-              }
-            />
+  <>
+    <h3>Bank Details</h3>
 
-            <FileInput
-              label="Upload Cancelled Cheque (Max upload size 200kb)"
-              name="cancelledChequeAttachment"
-              fileName={attachments.cancelledChequeFileName}
-              onChange={handleFileChange}
-              error={submittedStep === 4 && !!errors.cancelledChequeAttachment}
-            />
-          </>
-        )}
+    <div className={styles.step2Grid}>
+
+      <input
+        id="accountHolderName"
+        placeholder="Account Holder Name"
+        value={formData.accountHolderName}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            accountHolderName: onlyLetters(e.target.value),
+          }))
+        }
+        className={
+          submittedStep === 4 && errors.accountHolderName
+            ? styles.errorInput
+            : ""
+        }
+      />
+
+      <input
+        id="bankName"
+        placeholder="Bank Name"
+        value={formData.bankName}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            bankName: onlyLetters(e.target.value),
+          }))
+        }
+        className={
+          submittedStep === 4 && errors.bankName ? styles.errorInput : ""
+        }
+      />
+
+      <input
+        id="accountNumber"
+        placeholder="Account Number"
+        value={formData.accountNumber}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            accountNumber: onlyDigits(e.target.value, 18),
+          }))
+        }
+        className={
+          submittedStep === 4 && errors.accountNumber
+            ? styles.errorInput
+            : ""
+        }
+      />
+
+      <input
+        id="ifscCode"
+        placeholder="IFSC Code"
+        value={formData.ifscCode}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            ifscCode: formatIFSC(e.target.value),
+          }))
+        }
+        className={
+          submittedStep === 4 && errors.ifscCode ? styles.errorInput : ""
+        }
+      />
+
+      <input
+        id="branchLocation"
+        placeholder="Branch Location"
+        value={formData.branchLocation}
+        onChange={(e) =>
+          setFormData((p) => ({
+            ...p,
+            branchLocation: onlyLettersWithHyphen(e.target.value),
+          }))
+        }
+        className={
+          submittedStep === 4 && errors.branchLocation
+            ? styles.errorInput
+            : ""
+        }
+      />
+
+      <div className={styles.fileUpload}>
+  <label className={styles.fileBox}>
+    <span className={styles.fileBtn}>Choose File</span>
+
+    <span className={styles.fileText}>
+      {attachments.cancelledChequeAttachment
+        ? "File selected"
+        : "Upload Cancelled Cheque"}
+    </span>
+
+    <input
+      type="file"
+      name="cancelledChequeAttachment"
+      accept="image/*,application/pdf"
+      onChange={handleFileChange}
+      hidden
+    />
+  </label>
+</div>
+
+    </div>
+  </>
+)}
 
         <div className={styles.actions}>
           {step > 1 && (

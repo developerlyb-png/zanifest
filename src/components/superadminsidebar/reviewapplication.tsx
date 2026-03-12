@@ -72,7 +72,7 @@ const [iibVerified, setIibVerified] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [tenthStatus, setTenthStatus] = useState<VerificationState>("pending");
-
+const [editMode, setEditMode] = useState(false);
   const [twelfthStatus, setTwelfthStatus] =
     useState<VerificationState>("pending");
 
@@ -92,7 +92,26 @@ const [iibVerified, setIibVerified] = useState(false);
   useEffect(() => {
     load();
   }, []);
+const handleUpdateAgent = async () => {
+  try {
 
+    const { _id, ...data } = selected!;
+
+    await axios.patch("/api/admin/updateAgent", {
+      agentId: _id,
+      ...data
+    });
+
+    alert("Agent updated successfully");
+
+    setEditMode(false);
+    load();
+
+  } catch (err) {
+    console.error(err);
+    alert("Update failed");
+  }
+};
   const openReview = async (agent: AgentData) => {
     try {
       setLoading(true);
@@ -245,7 +264,7 @@ const [iibVerified, setIibVerified] = useState(false);
     );
     setIrdaiVerified(true);
   };
-
+const is12thUploaded = !!selected?.twelfthMarksheetAttachment;
   const handleIibClick = () => {
   window.open("https://pos.iib.gov.in/", "_blank");
   setIibVerified(true);
@@ -318,7 +337,25 @@ const [iibVerified, setIibVerified] = useState(false);
       {selected && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox} role="dialog" aria-modal="true">
-            <h2 className={styles.modalTitle}>Review Agent Application</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+  <h2 className={styles.modalTitle}>Review Agent Application</h2>
+
+  {!editMode && (
+    <button
+      style={{
+        background: "#2563eb",
+        color: "#fff",
+        border: "none",
+        padding: "6px 14px",
+        borderRadius: "6px",
+        cursor: "pointer"
+      }}
+      onClick={() => setEditMode(true)}
+    >
+      Edit
+    </button>
+  )}
+</div>
 
             <div className={styles.modalContent}>
               {/* top grid */}
@@ -352,12 +389,28 @@ const [iibVerified, setIibVerified] = useState(false);
 
                 <div className={styles.field}>
                   <label>First Name</label>
-                  <input readOnly value={selected.firstName || ""} />
+                  <input
+  readOnly={!editMode}
+  value={selected.firstName || ""}
+  onChange={(e) =>
+    setSelected((prev) =>
+      prev ? { ...prev, firstName: e.target.value } : prev
+    )
+  }
+/>
                 </div>
 
                 <div className={styles.field}>
                   <label>Last Name</label>
-                  <input readOnly value={selected.lastName || ""} />
+                  <input
+  readOnly={!editMode}
+  value={selected.lastName || ""}
+  onChange={(e) =>
+    setSelected((prev) =>
+      prev ? { ...prev, lastName: e.target.value } : prev
+    )
+  }
+/>
                 </div>
 
                 <div className={styles.field}>
@@ -367,22 +420,54 @@ const [iibVerified, setIibVerified] = useState(false);
 
                 <div className={styles.field}>
                   <label>Phone</label>
-                  <input readOnly value={selected.phone || ""} />
+                  <input
+  readOnly={!editMode}
+  value={selected.phone || ""}
+  onChange={(e) =>
+    setSelected((prev) =>
+      prev ? { ...prev, phone: e.target.value } : prev
+    )
+  }
+/>
                 </div>
 
                 <div className={styles.field}>
                   <label>City</label>
-                  <input readOnly value={selected.city || ""} />
+                 <input
+  readOnly={!editMode}
+  value={selected.city || ""}
+  onChange={(e) =>
+    setSelected((prev) =>
+      prev ? { ...prev, city: e.target.value } : prev
+    )
+  }
+/>
                 </div>
 
                 <div className={styles.field}>
                   <label>District</label>
-                  <input readOnly value={selected.district || ""} />
+                  <input
+  readOnly={!editMode}
+  value={selected.district || ""}
+  onChange={(e) =>
+    setSelected((prev) =>
+      prev ? { ...prev, district: e.target.value } : prev
+    )
+  }
+/>
                 </div>
 
                 <div className={styles.field}>
                   <label>State</label>
-                  <input readOnly value={selected.state || ""} />
+                  <input
+  readOnly={!editMode}
+  value={selected.state || ""}
+  onChange={(e) =>
+    setSelected((prev) =>
+      prev ? { ...prev, state: e.target.value } : prev
+    )
+  }
+/>
                 </div>
 
                 <div className={styles.field}>
@@ -718,31 +803,41 @@ const [iibVerified, setIibVerified] = useState(false);
                       )}
                     </div>
 
-                    <div className={styles.verifyRow}>
-                      <button
-                        className={`${styles.verifyAction} ${
-                          twelfthStatus === "approved" ? styles.approved : ""
-                        }`}
-                        onClick={() => setTwelfthStatus("approved")}
-                        disabled={twelfthStatus === "approved"}
-                      >
-                        Approve
-                      </button>
+                  <div className={styles.verifyRow}>
+  <button
+    className={`${styles.verifyAction} ${
+      twelfthStatus === "approved" ? styles.approved : ""
+    }`}
+    onClick={() => setTwelfthStatus("approved")}
+    disabled={
+      !selected?.twelfthMarksheetAttachment ||
+      twelfthStatus === "approved"
+    }
+  >
+    Approve
+  </button>
 
-                      <button
-                        className={`${styles.verifyAction} ${styles.reject}`}
-                        onClick={() => setTwelfthStatus("rejected")}
-                        disabled={twelfthStatus === "rejected"}
-                      >
-                        Reject
-                      </button>
+  <button
+    className={`${styles.verifyAction} ${styles.reject}`}
+    onClick={() => setTwelfthStatus("rejected")}
+    disabled={
+      !selected?.twelfthMarksheetAttachment ||
+      twelfthStatus === "rejected"
+    }
+  >
+    Reject
+  </button>
 
-                      <div className={styles.statusPill}>
-                        {twelfthStatus === "pending" && "Pending"}
-                        {twelfthStatus === "approved" && "Approved"}
-                        {twelfthStatus === "rejected" && "Rejected"}
-                      </div>
-                    </div>
+  <div
+    className={`${styles.statusPill} ${
+      !selected?.twelfthMarksheetAttachment ? styles.disabledStatus : ""
+    }`}
+  >
+    {twelfthStatus === "pending" && "Pending"}
+    {twelfthStatus === "approved" && "Approved"}
+    {twelfthStatus === "rejected" && "Rejected"}
+  </div>
+</div>
                   </div>
                 </div>
               </div>
@@ -854,6 +949,14 @@ const [iibVerified, setIibVerified] = useState(false);
                 >
                   Close
                 </button>
+                {editMode && (
+  <button
+    className={styles.finalAcceptBtn}
+    onClick={handleUpdateAgent}
+  >
+    Save Changes
+  </button>
+)}
               </div>
             </div>
           </div>

@@ -65,44 +65,64 @@ const Health = () => {
   // 🧩 Members UI
   const renderMembers = () => (
     <div className={styles.step1MembersList}>
-      {members.map((m, idx) => (
-        <div key={idx} className={styles.step1MemberCard}>
-          {/* Image: if m.image is a string use it, otherwise let Next/Image handle static import */}
-          <Image
-            src={typeof m.image === "string" ? (m.image as string) : (m.image as any)}
-            alt={m.name}
-            className={styles.step1MemberIcon}
-          />
-          <p>{m.name}</p>
+     {members.map((m, idx) => {
 
-          <div className={styles.step1Dropdown} ref={dropdownRef}>
-            <button
-              type="button"
-              className={styles.step1DropdownToggle}
-              onClick={() => setIsOpenIndex(isOpenIndex === idx ? null : idx)}
-            >
-              {ages[idx] ? `Age: ${ages[idx]}` : "Select Age"}{" "}
-              <span className={`${styles.step1Arrow} ${isOpenIndex === idx ? styles.up : ""}`}>
-                ▼
-              </span>
-            </button>
+  const name = m.name.toLowerCase();
 
-            {isOpenIndex === idx && (
-              <ul className={styles.step1DropdownMenu}>
-                {ageOptions.map((age) => (
-                  <li
-                    key={age}
-                    className={ages[idx] === age ? styles.step1SelectedOption : ""}
-                    onClick={() => handleAgeSelect(idx, age)}
-                  >
-                    {age}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      ))}
+  const minAge =
+    name === "son" || name === "daughter"
+      ? 0
+      : 18;
+
+  const memberAgeOptions = Array.from(
+    { length: 101 - minAge },
+    (_, i) => (i + minAge).toString()
+  );
+
+  return (
+    <div key={idx} className={styles.step1MemberCard}>
+      <Image
+        src={typeof m.image === "string" ? m.image : m.image}
+        alt={m.name}
+        className={styles.step1MemberIcon}
+      />
+
+      <p>{m.name}</p>
+
+      <div className={styles.step1Dropdown} ref={dropdownRef}>
+        <button
+          type="button"
+          className={styles.step1DropdownToggle}
+          onClick={() => setIsOpenIndex(isOpenIndex === idx ? null : idx)}
+        >
+          {ages[idx] ? `Age: ${ages[idx]}` : "Select Age"}
+
+          <span
+            className={`${styles.step1Arrow} ${
+              isOpenIndex === idx ? styles.up : ""
+            }`}
+          >
+            ▼
+          </span>
+        </button>
+
+        {isOpenIndex === idx && (
+          <ul className={styles.step1DropdownMenu}>
+            {memberAgeOptions.map((age) => (
+              <li
+                key={age}
+                className={ages[idx] === age ? styles.step1SelectedOption : ""}
+                onClick={() => handleAgeSelect(idx, age)}
+              >
+                {age}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+})}
     </div>
   );
 
