@@ -393,11 +393,10 @@ onClick={()=>downloadFile(agent.certificate2)}
 className={styles.reviewBtn}
 style={{ background:"transparent", border:"none" }}
 onClick={()=>{
-
-setSelectedAgent(agent);
-setSuccessMsg("");
-setShowModal(true);
-
+  setSelectedAgent(agent);
+  setTimeout(()=>{
+    setShowModal(true);
+  }, 0);
 }}
 >
 <FaCheck style={{ color:"#21cc5a", fontSize:18 }}/>

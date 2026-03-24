@@ -89,13 +89,13 @@ const MainPage = () => {
             We're Giving all the Insurance Services to you
           </div>
 
-          <div
+          {/* <div
             className={styles.listDiv}
             onClick={() => setActiveSection("how")}
             style={listStyle}
           >
             How it Works Section
-          </div>
+          </div> */}
 
           <div
             className={styles.listDiv}
@@ -124,7 +124,7 @@ const MainPage = () => {
           {activeSection === "best" && <BestServicesAdmin/>}
           {activeSection === "partner" && <PartnerAdmin/>}
           {activeSection === "services" && <AllInsuranceCAdmin/>}
-          {activeSection === "how" &&  <HowWorksAdmin/>}
+          {/* {activeSection === "how" &&  <HowWorksAdmin/>} */}
           {activeSection === "testimonials" && <FeedbackAdmin/>}
           {activeSection === "faq" && <FAQAdmin/>}
         </>
