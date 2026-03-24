@@ -422,7 +422,70 @@ onClick={()=>failAgent(agent)}
 
 </tbody>
 </table>
+{showModal && selectedAgent && (
+  <div className={styles.modalOverlay}>
+    <div className={styles.modalBox}>
 
+      <h3>Approve Agent</h3>
+
+      <p>
+        {selectedAgent.firstName} {selectedAgent.lastName}
+      </p>
+
+      <div style={{ marginTop: 20 }}>
+ {/* Upload Certificate */}
+        <label className={styles.label} style={{ marginTop: 15 }}>
+          Upload Certificate
+        </label>
+        <input
+          type="file"
+          onChange={(e) => {
+            if (e.target.files?.[0]) {
+              uploadCertificate(e.target.files[0]);
+            }
+          }}
+          style={{ marginTop: 5 }}
+        />
+        {/* Generate Certificate */}
+        <label className={styles.label}>Generate Certificate</label>
+        <button
+          className={styles.uploadBtn}
+          onClick={generatePDF}
+        >
+          Generate PDF
+        </button>
+
+       
+
+        {/* Approve */}
+        <label className={styles.label} style={{ marginTop: 15 }}>
+          Final Approval
+        </label>
+        <button
+          className={styles.approveBtn}
+        onClick={approveAgent}
+        >
+          Approve Agent
+        </button>
+
+      </div>
+
+      <button
+        className={styles.closeBtn}
+        onClick={() => setShowModal(false)}
+      >
+        Close
+      </button>
+
+      {successMsg && (
+        <p style={{ color: "green", marginTop: 10 }}>
+          {successMsg}
+        </p>
+      )}
+
+    </div>
+  </div>
+)}
 </div>
 );
 }
