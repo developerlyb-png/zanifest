@@ -11,12 +11,14 @@
   const fetcher = (url: string) => axios.get(url).then((res) => res.data.data);
 
   export default function HowWorksSections() {
+    const showSection = false;
     const { data, error } = useSWR(
-  "/api/howworksapi?includeImages=true",
+  showSection ?"/api/howworksapi?includeImages=true" : null,
   fetcher,
   { refreshInterval: 5000 }
 );
 
+if(!showSection) return null;
 
     const sectionRef = useRef<HTMLDivElement | null>(null);
     const [animateheading, setAnimateheading] = useState(false);
