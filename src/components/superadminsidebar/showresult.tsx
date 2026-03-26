@@ -446,7 +446,7 @@ onClick={()=>failAgent(agent)}
 
 {showModal && selectedAgent && (
   <div className={styles.modalOverlay}>
-    <div className={styles.modalBox}>
+    <div className={`${styles.modalBox} ${styles.approveModal}`}>
 
       {/* HEADER */}
       <div className={styles.modalHeader}>
