@@ -28,10 +28,71 @@ export default async function handler(
       return res.status(404).json({ message: "Agent not found" });
     }
 
+    /* =======================================================
+       🔥 ENSURE AGENT CODE EXISTS (MAIN FIX)
+    ======================================================= */
+
+    let agentCode = agent.agentCode;
+
+    if (!agentCode) {
+
+      let isUnique = false;
+      let newCode = "";
+      let attempts = 0;
+
+      while (attempts < 5 && !isUnique) {
+
+        const lastAgent = await Agent.findOne({
+          agentCode: { $regex: /^ZIP\d+$/ }
+        })
+          .sort({ createdAt: -1 })
+          .select("agentCode");
+
+        let nextNumber = 1309;
+
+        if (lastAgent?.agentCode) {
+          const num = parseInt(
+            lastAgent.agentCode.replace("ZIP", ""),
+            10
+          );
+          if (!isNaN(num)) {
+            nextNumber = num + 1 + attempts;
+          }
+        }
+
+        newCode = `ZIP${nextNumber}`;
+
+        const exists = await Agent.findOne({ agentCode: newCode });
+
+        if (!exists) {
+          isUnique = true;
+        }
+
+        attempts++;
+      }
+
+      if (!isUnique) {
+        return res.status(500).json({
+          message: "Failed to generate agent code"
+        });
+      }
+
+      agentCode = newCode;
+
+      // ✅ SAVE IN DB
+      await Agent.findByIdAndUpdate(agentId, {
+        agentCode: agentCode
+      });
+    }
+
+    /* =======================================================
+       📁 FILE SETUP (UPDATED WITH agentCode)
+    ======================================================= */
+
     const dir = path.join(process.cwd(), "public", "certificates");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    const fileName = `${agent.agentCode || "certificate"}.pdf`;
+    const fileName = `${agentCode}.pdf`; // 🔥 FIXED
     const filePath = path.join(dir, fileName);
 
     const doc = new PDFDocument({
@@ -74,23 +135,40 @@ export default async function handler(
     // NAME
     doc.text(`Mr./Ms. ${agent.firstName} ${agent.lastName}`, 60, y);
 
-    // PROFILE IMAGE RIGHT SIDE PERFECT ALIGN
-    if (agent.profileImage) {
-      try {
-        const base64Data = agent.profileImage.split(",")[1];
-        const imgBuffer = Buffer.from(base64Data, "base64");
+    // PROFILE IMAGE
+  if (agent.profileImage && typeof agent.profileImage === "string") {
+  try {
 
-        const pngBuffer = await sharp(imgBuffer).png().toBuffer();
+    let imgBuffer;
 
-        doc.image(pngBuffer, doc.page.width - 130, 80, {
-          width: 70,
-          height: 70,
-        });
-      } catch (err) {
-        console.log("Profile image load error:", err);
-      }
+    if (agent.profileImage.includes("base64")) {
+      // data:image/png;base64,...
+      const base64Data = agent.profileImage.split(",")[1];
+      imgBuffer = Buffer.from(base64Data, "base64");
+    } else {
+      // pure base64
+      imgBuffer = Buffer.from(agent.profileImage, "base64");
     }
 
+    // 🔥 important: resize bhi kar do (avoid pdfkit issues)
+    const pngBuffer = await sharp(imgBuffer)
+      .resize(100, 100)
+      .png()
+      .toBuffer();
+
+    doc.image(pngBuffer, doc.page.width - 130, 80, {
+      width: 70,
+      height: 70,
+    });
+
+    console.log("✅ Profile image added");
+
+  } catch (err) {
+    console.log("❌ Profile image error:", err);
+  }
+} else {
+  console.log("❌ No profile image found");
+}
     y += 30;
 
     const write = (text: string, gap = 18) => {
@@ -113,10 +191,9 @@ export default async function handler(
       34
     );
 
-    // POS CODE SAFE
-    write(`POS Code: ${agent.agentCode || "N/A"}`, 16);
+    // 🔥 FIXED POS CODE
+    write(`POS Code: ${agentCode}`, 16);
 
-    // PAN NUMBER
     write(`Pan No: ${agent.panNumber || "N/A"}`, 26);
 
     write(
@@ -188,6 +265,7 @@ export default async function handler(
       success: true,
       url: `/certificates/${fileName}`,
     });
+
   } catch (error) {
     console.error("CREATE CERTIFICATE ERROR:", error);
     return res.status(500).json({ message: "Server Error" });

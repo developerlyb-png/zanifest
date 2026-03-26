@@ -39,75 +39,49 @@ export default async function handler(
       return res.status(500).json({ error: "Upload failed" });
     }
 
+    // 🔥 DEBUG (important)
+    console.log("FIELDS:", fields);
+    console.log("FILES:", files);
+
+    // ✅ FIX AGENT ID
     const agentId = Array.isArray(fields.agentId)
       ? fields.agentId[0]
       : fields.agentId;
 
-    if (!agentId) {
-      return res.status(400).json({ error: "Agent ID missing" });
+    console.log("AGENT ID:", agentId);
+
+    if (!agentId || agentId === "undefined") {
+      return res.status(400).json({ error: "Invalid Agent ID" });
     }
 
-    let uploadedFile: any = null;
+    // ✅ FIX FILE PARSING (Formidable safe)
+    const uploadedFile =
+      files?.file?.[0] ||
+      files?.file ||
+      files?.certificate?.[0] ||
+      files?.certificate;
 
-    if (files.file) {
-      uploadedFile = Array.isArray(files.file)
-        ? files.file[0]
-        : files.file;
-    } else if (files.certificate) {
-      uploadedFile = Array.isArray(files.certificate)
-        ? files.certificate[0]
-        : files.certificate;
-    }
+    console.log("UPLOADED FILE:", uploadedFile);
 
     if (!uploadedFile) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    // ✅ FILE PATH
     const filePath = `/certificates/${path.basename(uploadedFile.filepath)}`;
 
-    // Save certificate path
-    await Agent.findByIdAndUpdate(agentId, {
-      $set: {
-        certificate1: filePath,
-        certificate: filePath,
+    // ✅ SAVE TO DB (NO agentCode here)
+    await Agent.findByIdAndUpdate(
+      agentId,
+      {
+        $set: {
+  certificate1: filePath,
+  certificate2: filePath, // 🔥 ADD THIS
+  certificate: filePath,
+},
       },
-    });
-
-    // =========================
-    // ZIP AGENT CODE GENERATION
-    // =========================
-
-    const agent = await Agent.findById(agentId);
-
-    if (agent && !agent.agentCode) {
-
-      const lastAgent = await Agent.findOne({
-        agentCode: { $regex: /^ZIP\d+$/ }
-      })
-        .sort({ createdAt: -1 })  // safer than string sort
-        .select("agentCode");
-
-      let nextNumber = 1309; // Starting ZIP number
-
-      if (lastAgent?.agentCode) {
-        const num = parseInt(
-          lastAgent.agentCode.replace("ZIP", ""),
-          10
-        );
-
-        if (!isNaN(num)) {
-          nextNumber = num + 1;
-        }
-      }
-
-      const newCode = `ZIP${nextNumber}`;
-
-      await Agent.findByIdAndUpdate(agentId, {
-        $set: { agentCode: newCode },
-      });
-
-      console.log("✅ ZIP Agent Code Generated:", newCode);
-    }
+      { new: true }
+    );
 
     return res.status(200).json({
       success: true,

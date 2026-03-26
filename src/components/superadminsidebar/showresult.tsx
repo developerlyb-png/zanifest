@@ -74,21 +74,29 @@ useEffect(() => {
 /* ---------------- APPROVE ---------------- */
 
 const approveAgent = async () => {
+  try {
+    if (!selectedAgent?._id) {
+      alert("Agent not selected ❌");
+      return;
+    }
 
-  const freshAgent = agents.find(a => a._id === selectedAgent._id);
+    await axios.post("/api/updateStatus", {
+      id: selectedAgent._id,
+      status: "approved"
+    });
 
-  if (!freshAgent?.certificate2) {
-    alert("Please generate or upload certificate first");
-    return;
+    setSuccessMsg("Agent approved successfully ✅");
+
+setTimeout(() => {
+  setSuccessMsg("");
+}, 5000); // 5 sec
+
+    await loadAgents(); // refresh data
+
+  } catch (error: any) {
+    console.log("APPROVE ERROR:", error.response?.data || error.message);
+    alert(error.response?.data?.message || "Approval failed");
   }
-
-  await axios.post("/api/updateStatus", {
-    id: selectedAgent._id,
-    status: "approved"
-  });
-
-  setSuccessMsg("Agent approved successfully ✅");
-  loadAgents();
 };
 
 /* ---------------- FAIL ---------------- */
@@ -122,16 +130,30 @@ const generatePDF = async () => {
 
 const uploadCertificate = async (file: File) => {
 
-  const formData = new FormData();
+  try {
 
-  formData.append("file", file);
-  formData.append("agentId", selectedAgent._id);
+    if (!selectedAgent || !selectedAgent._id) {
+      alert("Agent not selected ❌");
+      return;
+    }
 
-  await axios.post("/api/uploadCertificate", formData);
+    console.log("Uploading for agent:", selectedAgent);
 
-  await loadAgents();
+    const formData = new FormData();
 
-  setSuccessMsg("Certificate uploaded successfully ✅");
+    formData.append("file", file);
+    formData.append("agentId", selectedAgent._id.toString());
+
+    await axios.post("/api/uploadCertificate", formData);
+
+    await loadAgents();
+
+    setSuccessMsg("Certificate uploaded successfully ✅");
+
+  } catch (error: any) {
+    console.log("UPLOAD ERROR:", error.response?.data || error.message);
+    alert(error.response?.data?.error || "Upload failed");
+  }
 };
 
 /* ---------------- DOWNLOAD ---------------- */
@@ -335,7 +357,7 @@ setCurrentPage(1);
 
 <td>
 
-{agent.certificate1 ? (
+{agent.certificate1 && agent.status === "approved" ? (
 
 <>
 <button
@@ -360,7 +382,7 @@ onClick={()=>downloadFile(agent.certificate1)}
 
 <td>
 
-{agent.certificate2 ? (
+{agent.certificate2 && agent.status === "approved" ? (
 
 <>
 <button
@@ -382,7 +404,6 @@ onClick={()=>downloadFile(agent.certificate2)}
 ) : "—"}
 
 </td>
-
 <td>
 
 {agent.status === "reviewed" && (
@@ -422,70 +443,108 @@ onClick={()=>failAgent(agent)}
 
 </tbody>
 </table>
+
 {showModal && selectedAgent && (
   <div className={styles.modalOverlay}>
     <div className={styles.modalBox}>
 
-      <h3>Approve Agent</h3>
+      {/* HEADER */}
+      <div className={styles.modalHeader}>
+        <h3>Approve Agent</h3>
+        <button
+          className={styles.closeIcon}
+          onClick={() => setShowModal(false)}
+        >
+          ✕
+        </button>
+      </div>
 
-      <p>
+      {/* AGENT NAME */}
+      <p className={styles.agentName}>
         {selectedAgent.firstName} {selectedAgent.lastName}
       </p>
 
-      <div style={{ marginTop: 20 }}>
- {/* Upload Certificate */}
-        <label className={styles.label} style={{ marginTop: 15 }}>
-          Upload Certificate
-        </label>
-        <input
-          type="file"
-          onChange={(e) => {
-            if (e.target.files?.[0]) {
-              uploadCertificate(e.target.files[0]);
-            }
-          }}
-          style={{ marginTop: 5 }}
-        />
+      {/* BODY */}
+      <div className={styles.modalBody}>
+
+        {/* Upload Certificate */}
+        <label className={styles.label}>Upload Certificate</label>
+
+        <div className={styles.fileUploadBox}>
+          <label className={styles.customFileUpload}>
+            <input
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadCertificate(file); // ✅ working
+              }}
+            />
+            <span className={styles.chooseBtn}>Choose File</span>
+            <span className={styles.fileText}>
+              Upload your certificate
+            </span>
+          </label>
+        </div>
+
         {/* Generate Certificate */}
         <label className={styles.label}>Generate Certificate</label>
         <button
-          className={styles.uploadBtn}
-          onClick={generatePDF}
+          className={styles.btnBlue}
+          onClick={generatePDF} // ✅ working
         >
           Generate PDF
         </button>
 
-       
-
-        {/* Approve */}
-        <label className={styles.label} style={{ marginTop: 15 }}>
-          Final Approval
-        </label>
+        {/* Final Approval */}
+        <label className={styles.label}>Final Approval</label>
         <button
-          className={styles.approveBtn}
-        onClick={approveAgent}
+          className={styles.btnGreen}
+          onClick={approveAgent} // ✅ working
         >
           Approve Agent
         </button>
 
       </div>
 
-      <button
-        className={styles.closeBtn}
-        onClick={() => setShowModal(false)}
-      >
-        Close
-      </button>
+      {/* FOOTER */}
+      <div className={styles.modalFooter}>
+        <button
+          className={styles.closeBtn}
+          onClick={() => setShowModal(false)}
+        >
+          Close
+        </button>
+      </div>
 
+      {/* SUCCESS MESSAGE */}
       {successMsg && (
-        <p style={{ color: "green", marginTop: 10 }}>
-          {successMsg}
-        </p>
+        <p className={styles.successMsg}>{successMsg}</p>
       )}
 
     </div>
   </div>
 )}
+<div style={{ marginTop: 20, display: "flex", gap: 10, alignItems: "center" }}>
+  
+  <button
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage(prev => prev - 1)}
+  >
+    ⬅ Prev
+  </button>
+
+  <span>
+    Page {currentPage} of {totalPages}
+  </span>
+
+  <button
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage(prev => prev + 1)}
+  >
+    Next ➡
+  </button>
+
+</div>
 </div>
 );
 }
