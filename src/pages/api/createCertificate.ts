@@ -213,7 +213,7 @@ export default async function handler(
 
     const lineY = doc.page.height - 210;
 
-    const signPath = path.join(process.cwd(), "public/Ca.jpeg");
+    const signPath = path.join(process.cwd(), "public/ca.jpeg");
 
     if (fs.existsSync(signPath)) {
       doc.image(signPath, 70, lineY - 130, {

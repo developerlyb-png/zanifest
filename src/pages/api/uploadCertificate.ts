@@ -76,7 +76,7 @@ export default async function handler(
       {
         $set: {
   certificate1: filePath,
-  certificate2: filePath, // 🔥 ADD THIS
+  certificate2: filePath, //  ADD THIS
   certificate: filePath,
 },
       },

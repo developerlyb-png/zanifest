@@ -93,23 +93,28 @@ const ContactPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const form = e.target as HTMLFormElement;
+    const form = e.currentTarget as HTMLFormElement; // ✅ FIX
+    const formData = new FormData(form);
 
     const data = {
-      name: (form.elements.namedItem("name") as HTMLInputElement).value,
-      email: (form.elements.namedItem("email") as HTMLInputElement).value,
-      phone: (form.elements.namedItem("phone") as HTMLInputElement).value,
-      message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
+      name: String(formData.get("name") || ""),
+      email: String(formData.get("email") || ""),
+      phone: String(formData.get("phone") || ""),
+      message: String(formData.get("message") || ""),
     };
+
+    console.log("FORM DATA:", data); // ✅ debug
 
     const res = await fetch("/api/contact", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(data),
     });
 
     if (res.ok) {
-      form.reset();
+      form.reset(); // ✅ FIXED
       setShowModal(true);
     } else {
       alert("Something went wrong ❌");
@@ -140,8 +145,6 @@ const ContactPage = () => {
       <div className={styles.carouselTexts}>
         <p className={styles.heroPara}>
           At Zanifest, we believe insurance should be a promise kept, not a hassle endured.
-          Founded with a vision to simplify financial protection for every Indian, we bridge
-          the gap between complex insurance terms and your peace of mind.
         </p>
 
         <p className={styles.subLine}>
@@ -160,7 +163,8 @@ const ContactPage = () => {
               <form onSubmit={handleSubmit}>
                 <input name="name" type="text" placeholder="Full Name" required />
                 <input name="email" type="email" placeholder="Email Address" required />
-                <input name="phone" type="tel" placeholder="Phone Number" />
+                <input name="phone" type="tel" placeholder="Phone Number"   maxLength={10}
+  pattern="[0-9]{10}" required/>
                 <textarea name="message" rows={4} placeholder="Your Message" required />
                 <button type="submit">Send Message</button>
               </form>
