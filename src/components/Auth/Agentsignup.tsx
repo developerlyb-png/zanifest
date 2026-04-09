@@ -24,21 +24,62 @@ export default function AgentsignUp() {
     setErrorMsg("");
     setLoading(true);
 
-    if (!userName || !email || !password) {
-      setErrorMsg("Please fill all fields");
-      setLoading(false);
-      return;
-    }
+   // ✅ TRIM (ADD)
+const cleanName = userName.trim();
+const cleanEmail = email.trim();
+const cleanPassword = password.trim();
+
+// ✅ EMPTY CHECK (existing + improved)
+if (!cleanName || !cleanEmail || !cleanPassword) {
+  setErrorMsg("Please fill all fields");
+  setLoading(false);
+  return;
+}
+
+// ✅ NAME VALIDATION (ADD)
+const nameRegex = /^[A-Za-z ]+$/;
+if (!nameRegex.test(cleanName)) {
+  setErrorMsg("Name must contain only letters");
+  setLoading(false);
+  return;
+}
+
+if (cleanName.length < 2 || cleanName.length > 50) {
+  setErrorMsg("Name must be between 2 and 50 characters");
+  setLoading(false);
+  return;
+}
+
+// ✅ EMAIL VALIDATION (ADD)
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(cleanEmail)) {
+  setErrorMsg("Invalid email format");
+  setLoading(false);
+  return;
+}
+
+// ✅ PASSWORD VALIDATION (ADD)
+if (cleanPassword.length < 6) {
+  setErrorMsg("Password must be at least 6 characters");
+  setLoading(false);
+  return;
+}
+
+if (cleanPassword.length > 50) {
+  setErrorMsg("Password too long");
+  setLoading(false);
+  return;
+}
 
     try {
       const res = await fetch("/api/auth/agentsignup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userName, 
-          email,
-          password,
-        }),
+  userName: cleanName,
+  email: cleanEmail,
+  password: cleanPassword,
+}),
       });
 
       const data = await res.json();

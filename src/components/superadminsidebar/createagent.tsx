@@ -181,7 +181,9 @@ const [attachments, setAttachments] = useState<AttachmentType>({
 
     if (step === 1) {
       if (!formData.firstName) newErrors.firstName = "Required";
-      if (!formData.lastName) newErrors.lastName = "Required";
+       if (!formData.lastName) newErrors.lastName = "Required";
+    else if (!/^[A-Za-z ]+$/.test(formData.lastName))
+      newErrors.lastName = "Only letters allowed";
       if (!formData.phone) newErrors.phone = "Required";
       if (!formData.password) newErrors.password = "Required";
     }

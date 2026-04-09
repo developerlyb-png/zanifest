@@ -15,35 +15,80 @@ const resetpassword = () => {
     setShowPassword((prev) => !prev);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/admin/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          currentPassword,
-          newPassword,
-        }),
-      });
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-      console.log("response from reset password ->", res);
+  // ✅ TRIM INPUTS
+  const cleanEmail = email.trim();
+  const cleanCurrentPassword = currentPassword.trim();
+  const cleanNewPassword = newPassword.trim();
 
-      const data = await res.json();
-      console.log("Reset password response:", data);
+  // ✅ EMPTY CHECK
+  if (!cleanEmail || !cleanCurrentPassword || !cleanNewPassword) {
+    alert("All fields are required");
+    return;
+  }
 
-      if (!res.ok) throw new Error(data.message || "Failed to reset password");
+  // ✅ EMAIL VALIDATION
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(cleanEmail)) {
+    alert("Invalid email format");
+    return;
+  }
 
-      alert("Password reset successful");
-    } 
-    
-    catch (err: any) {
-      alert(err.message || "Something went wrong");
-    }
-  };
+  // ✅ PASSWORD VALIDATION
+  if (cleanNewPassword.length < 6) {
+    alert("New password must be at least 6 characters");
+    return;
+  }
+
+  if (cleanNewPassword.length > 50) {
+    alert("Password too long");
+    return;
+  }
+
+  // ✅ NEW ≠ CURRENT PASSWORD
+  if (cleanCurrentPassword === cleanNewPassword) {
+    alert("New password must be different from current password");
+    return;
+  }
+
+  try {
+    // 🔐 CSRF TOKEN GET
+    const csrfRes = await fetch("/api/csrf-token", {
+      credentials: "include",
+    });
+
+    const { csrfToken } = await csrfRes.json();
+
+    // 🔐 RESET PASSWORD API
+    const res = await fetch("/api/admin/reset-password", {
+      method: "POST",
+      credentials: "include", // ✅ IMPORTANT
+      headers: {
+        "Content-Type": "application/json",
+        "x-csrf-token": csrfToken, // 🔥 IMPORTANT
+      },
+      body: JSON.stringify({
+        email: cleanEmail,
+        currentPassword: cleanCurrentPassword,
+        newPassword: cleanNewPassword,
+      }),
+    });
+
+    console.log("response from reset password ->", res);
+
+    const data = await res.json();
+    console.log("Reset password response:", data);
+
+    if (!res.ok) throw new Error(data.message || "Failed to reset password");
+
+    alert("Password reset successful");
+
+  } catch (err: any) {
+    alert(err.message || "Something went wrong");
+  }
+};
 
   return (
     <div className={styles.container}>

@@ -1,37 +1,56 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import dbConnect from '@/lib/dbConnect';
-import Admin from '@/models/Admin';
+import type { NextApiRequest, NextApiResponse } from "next";
+import dbConnect from "@/lib/dbConnect";
+import Admin from "@/models/Admin";
+import { withAuth } from "@/utils/withAuth"; // ✅ ADD THIS
 
-export default async function handler(req : NextApiRequest, res: NextApiResponse){
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "DELETE") {
+    return res.status(405).json({ message: "This method is not allowed!" });
+  }
 
-    if(req.method!=='DELETE'){
-        return res.status(405).json({message: 'This method is not allowed!'});
+  const { id } = req.query;
+
+  // ✅ Logged-in user
+  const user = (req as any).user;
+
+  if (!id || typeof id !== "string") {
+    return res.status(400).json({ message: "Invalid ID" });
+  }
+
+  try {
+    await dbConnect();
+
+    // 🔐 ONLY ADMIN CAN DELETE
+    if (user.role !== "admin" && user.role !== "superadmin") {
+      return res.status(403).json({ message: "Forbidden" });
     }
 
-    const {id} =  req.query;
-    console.log("id of the admin to be deleted :", id);
-
-    if(!id || typeof id!== 'string'){
-        return res.status(400).json({message: 'Invalid ID'});
+    // 🔥 Prevent self delete (optional but recommended)
+    if (user.id === id) {
+      return res.status(400).json({
+        message: "You cannot delete your own account",
+      });
     }
 
-    try{
-        await dbConnect();
+    const admin = await Admin.findByIdAndDelete(id);
 
-        const admin = await Admin.findByIdAndDelete(id);
-        console.log("Admin findByIdAndDelete:", admin);
-
-        if(!admin){
-            return res.status(404).json({message: 'manager with this id is not in the database'});
-        }
-
-        return res.status(200).json({message: 'Admin deleted successfully'});
+    if (!admin) {
+      return res.status(404).json({
+        message: "Admin with this id not found",
+      });
     }
 
-    catch(error){
+    return res.status(200).json({
+      message: "Admin deleted successfully",
+    });
 
-        console.error('Error deleting admin:', error);
-        return res.status(500).json({message: 'Internal Server Error'});
-
-    }
+  } catch (error) {
+    console.error("Error deleting admin:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
 }
+
+// ✅ PROTECT THIS API
+export default withAuth(handler);

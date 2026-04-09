@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // ✅ ADD useEffect
 import { useRouter } from "next/navigation";
 import { FaSpinner } from "react-icons/fa";
 import styles from "@/styles/components/Auth/Login.module.css";
 import Image from "next/image";
 
 export default function Agentlogin() {
-
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,53 +15,83 @@ export default function Agentlogin() {
 
   const router = useRouter();
 
-  // ================= LOGIN SUBMIT =================
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setError(false);
+  // ✅ 🔥 ADD THIS (already logged-in check)
+  useEffect(() => {
+    const checkAlreadyLogin = async () => {
+      try {
+        const res = await fetch("/api/auth/check-session", {
+          credentials: "include",
+        });
 
-    try {
+        if (res.status === 200) {
+          const data = await res.json();
 
-      const res = await fetch("/api/agent/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: userName,
-          password,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(true);
-        alert(data.message || "Login failed");
-        return;
+          // ✅ role-based redirect
+          if (data.user?.role === "agent") {
+            router.replace("/agentpage");
+          }
+        }
+      } catch (err) {
+        console.log("Not logged in");
       }
+    };
 
-      // ✅ SAVE TOKEN COOKIE (VERY IMPORTANT FOR 401 FIX)
-      document.cookie = `agentToken=${data.token}; path=/; max-age=86400`;
+    checkAlreadyLogin();
+  }, []);
 
-      // optional local storage
-      localStorage.setItem("agentName", data.agent?.name || "");
+  // ================= LOGIN SUBMIT =================
+ async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  setLoading(true);
+  setError(false);
 
-      // ✅ DIRECT REDIRECT TO AGENT PAGE
-      router.replace("/agentpage");
+  try {
+    // ✅ STEP 1: GET CSRF TOKEN
+    const csrfRes = await fetch("/api/csrf-token", {
+      credentials: "include", // 🔥 MUST
+    });
 
-    } catch (err) {
-      console.error("Login failed:", err);
+    const csrfData = await csrfRes.json();
+    const csrfToken = csrfData.csrfToken;
+
+    // ✅ STEP 2: LOGIN API
+    const res = await fetch("/api/agent/login", {
+      method: "POST",
+      credentials: "include", // 🔥 MUST
+      headers: {
+        "Content-Type": "application/json",
+        "x-csrf-token": csrfToken, // 🔥 IMPORTANT
+      },
+      body: JSON.stringify({
+        email: userName,
+        password,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
       setError(true);
-    } finally {
-      setLoading(false);
+      alert(data.message || "Login failed");
+      return;
     }
+
+    // optional
+    localStorage.setItem("agentName", data.agent?.name || "");
+
+    // ✅ redirect
+    router.replace("/agentpage");
+
+  } catch (err) {
+    console.error("Login failed:", err);
+    setError(true);
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <>
-      {/* ================= LOADER ================= */}
       {loading && (
         <div className={styles.loaderOverlay}>
           <FaSpinner className={styles.loaderIcon} />
@@ -71,7 +100,6 @@ export default function Agentlogin() {
       )}
 
       <div className={styles.cont}>
-        {/* LEFT IMAGE */}
         <div className={styles.left}>
           <Image
             src={require("@/assets/loginbanner.png")}
@@ -80,10 +108,8 @@ export default function Agentlogin() {
           />
         </div>
 
-        {/* LOGIN FORM */}
         <div className={styles.loginCont}>
           <div className={styles.formDiv}>
-
             <div className={styles.logo}>
               <Image
                 src={require("@/assets/logo.png")}
@@ -140,7 +166,6 @@ export default function Agentlogin() {
                   Sign Up
                 </span>
               </p>
-
             </form>
           </div>
         </div>

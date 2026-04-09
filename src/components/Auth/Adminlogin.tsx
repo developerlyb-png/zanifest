@@ -1,11 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // ✅ ADD useEffect
 import { useRouter } from "next/router";
 import styles from "@/styles/components/Auth/Login.module.css";
 import Image from "next/image";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { toast } from 'react-hot-toast';
-
+import { toast } from "react-hot-toast";
 
 export default function AdminLogin() {
   const [password, setPassword] = useState<string>("");
@@ -16,53 +15,85 @@ export default function AdminLogin() {
 
   const router = useRouter();
 
+  // ✅ 🔥 ADD THIS (IMPORTANT)
+  useEffect(() => {
+    const checkAlreadyLogin = async () => {
+      try {
+        const res = await fetch("/api/auth/check-session", {
+          credentials: "include",
+        });
+
+        if (res.status === 200) {
+          const data = await res.json();
+
+          // ✅ role based redirect
+          if (data.user?.role === "superadmin") {
+            router.replace("/superadmin");
+          } else if (data.user?.role === "admin") {
+            router.replace("/admindashboard");
+          }
+        }
+      } catch (err) {
+        console.log("Not logged in");
+      }
+    };
+
+    checkAlreadyLogin();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true); 
-    setError(false);
+  e.preventDefault();
+  setLoading(true);
+  setError(false);
 
-    try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    // ✅ STEP 1: GET CSRF TOKEN
+    const csrfRes = await fetch("/api/csrf-token", {
+      credentials: "include", // 🔥 IMPORTANT
+    });
 
-      const data = await res.json();
+    const csrfData = await csrfRes.json();
+    const csrfToken = csrfData.csrfToken;
 
-      if (!res.ok) {
-        setError(true);
-        toast.error(data.message || "Login failed");
-        setLoading(false);
-        return;
-      }
+    // ✅ STEP 2: LOGIN API CALL
+    const res = await fetch("/api/admin/login", {
+      method: "POST",
+      credentials: "include", // 🔥 MUST
+      headers: {
+        "Content-Type": "application/json",
+        "x-csrf-token": csrfToken, // 🔥 VERY IMPORTANT
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-      // Store token for client-side requests and use replace for navigation
-      if (data.token) {
-        localStorage.setItem("adminToken", data.token);
-      }
+    const data = await res.json();
 
-      if (data.role === "superadmin") {
-        router.replace("/superadmin");
-      } else if (data.role === "admin") {
-        router.replace("/admindashboard");
-      } else {
-        toast.error("Unauthorized Role");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false); 
+    if (!res.ok) {
+      setError(true);
+      toast.error(data.message || "Login failed");
+      setLoading(false);
+      return;
     }
-  };
+
+    // ✅ SUCCESS REDIRECT
+    if (data.role === "superadmin") {
+      router.replace("/superadmin");
+    } else if (data.role === "admin") {
+      router.replace("/admindashboard");
+    } else {
+      toast.error("Unauthorized Role");
+    }
+
+  } catch (error) {
+    console.error("Login error:", error);
+    toast.error("Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className={styles.cont}>
-      {/* 🔥 Full Page Loader */}
       {loading && (
         <div className={styles.loaderOverlay}>
           <AiOutlineLoading3Quarters className={styles.pageLoader} />
@@ -89,7 +120,6 @@ export default function AdminLogin() {
           </div>
 
           <h1 className={styles.heading}>Admin Login to continue</h1>
-         
 
           <form className={styles.loginForm} onSubmit={handleSubmit}>
             <div className={styles.error}>
@@ -99,8 +129,6 @@ export default function AdminLogin() {
             <div className={styles.formInput}>
               <input
                 type="text"
-                name="email"
-                id="email"
                 placeholder="E-mail Address"
                 required
                 className={styles.input}
@@ -111,8 +139,6 @@ export default function AdminLogin() {
             <div className={styles.formInput}>
               <input
                 type={showPassword ? "text" : "password"}
-                name="password"
-                id="password"
                 placeholder="Password"
                 required
                 className={styles.input}
@@ -123,11 +149,10 @@ export default function AdminLogin() {
             <div className={styles.showPasswordDiv}>
               <input
                 type="checkbox"
-                id="showP"
                 className={styles.passCheck}
                 onClick={() => setShowPassword(!showPassword)}
               />
-              <label htmlFor="showP">Show Password</label>
+              <label>Show Password</label>
             </div>
 
             <button

@@ -3,37 +3,71 @@ import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/dbConnect";
 import Manager from "@/models/Manager";
 import Agent from "@/models/Agent";
+import { withAuth } from "@/utils/withAuth";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const { email, newPassword } = req.body;
-  console.log("Change password API called:", req.body);
+  const { newPassword } = req.body;
 
-  if (!email || !newPassword) {
-    return res.status(400).json({ message: "Email and new password are required." });
+  // ✅ Logged-in user from token
+  const user = (req as any).user;
+
+  if (!newPassword) {
+    return res.status(400).json({ message: "New password is required." });
+  }
+
+  // 🔐 Password validation
+  if (newPassword.length < 6) {
+    return res.status(400).json({
+      message: "Password must be at least 6 characters long",
+    });
   }
 
   try {
     await dbConnect();
 
-    const person = (await Agent.findOne({ email })) || (await Manager.findOne({email})) ;
-
-    if (!person) {
-      console.log("Admin/Agent/Manager not found with email:", email);
-      return res.status(404).json({ message: "Admin/Agent/Manager not found." });
+    // ✅ Role restriction (only agent & manager allowed)
+    if (!["agent", "manager"].includes(user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
     }
 
-    person.password = newPassword;
+    // ✅ Find logged-in user
+    const person =
+      (await Agent.findById(user.id)) ||
+      (await Manager.findById(user.id));
+
+    if (!person) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // 🔐 Prevent same password reuse
+    const isSame = await bcrypt.compare(newPassword, person.password);
+    if (isSame) {
+      return res.status(400).json({
+        message: "New password cannot be same as old password",
+      });
+    }
+
+    // 🔐 Hash password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    person.password = hashedPassword;
+
     await person.save();
 
-    return res.status(200).json({ message: "Password updated successfully." });
-  } 
-  
-  catch (error) {
+    return res.status(200).json({
+      message: "Password updated successfully.",
+    });
+
+  } catch (error) {
     console.error("Password change error:", error);
-    return res.status(500).json({ message: "Server error. Try again later." });
+    return res.status(500).json({
+      message: "Server error. Try again later.",
+    });
   }
 }
+
+// ✅ Protect API
+export default withAuth(handler);

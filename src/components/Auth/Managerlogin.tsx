@@ -1,27 +1,61 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
-import { FaSpinner } from "react-icons/fa"; // Spinner icon
+"use client";
+
+import { useState, useEffect } from "react"; // ✅ ADD useEffect
+import { useRouter } from "next/navigation";
+import { FaSpinner } from "react-icons/fa";
 import styles from "@/styles/components/Auth/Login.module.css";
 import Image from "next/image";
 
-export default function Managerlogin() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+export default function Agentlogin() {
+  const [userName, setUserName] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true); // Show loader overlay
+  // ✅ 🔥 ADD THIS (already logged-in check)
+  useEffect(() => {
+    const checkAlreadyLogin = async () => {
+      try {
+        const res = await fetch("/api/auth/check-session", {
+          credentials: "include",
+        });
+
+        if (res.status === 200) {
+          const data = await res.json();
+
+          // ✅ role-based redirect
+          if (data.user?.role === "agent") {
+            router.replace("/agentpage");
+          }
+        }
+      } catch (err) {
+        console.log("Not logged in");
+      }
+    };
+
+    checkAlreadyLogin();
+  }, []);
+
+  // ================= LOGIN SUBMIT =================
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError(false);
 
     try {
-      const res = await fetch("/api/manager/login", {
+      const res = await fetch("/api/agent/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        credentials: "include", // ✅ IMPORTANT
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userName,
+          password,
+        }),
       });
 
       const data = await res.json();
@@ -29,45 +63,31 @@ export default function Managerlogin() {
       if (!res.ok) {
         setError(true);
         alert(data.message || "Login failed");
-        setLoading(false);
         return;
       }
 
-      // ✅ Store token in cookie
-      document.cookie = `managerToken=${data.token}; path=/;`;
+      // ❌ REMOVE THIS (important)
+      // document.cookie = `agentToken=${data.token}; path=/; max-age=86400`;
 
-      // ✅ NEW: Store token in localStorage so dashboard can read
-      localStorage.setItem("managerToken", data.token);
+      // optional
+      localStorage.setItem("agentName", data.agent?.name || "");
 
-      console.log("✅ Manager token saved:", data.token);
-
-      setError(false);
-
-      // ✅ Redirect based on role
-      if (data.role === "national") {
-        router.push("/nationalmanagerdashboard");
-      } else if (data.role === "state") {
-        router.push("/statemanagerdashboard");
-      } else if (data.role === "district") {
-        router.push("/districtmanagerdashboard");
-      } else {
-        alert("Invalid manager role");
-        setLoading(false);
-      }
+      // ✅ redirect
+      router.replace("/agentpage");
     } catch (err) {
-      console.error("Login error:", err);
-      alert("Something went wrong. Please try again.");
+      console.error("Login failed:", err);
+      setError(true);
+    } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <>
-      {/* ✅ Full-page overlay loader */}
       {loading && (
         <div className={styles.loaderOverlay}>
           <FaSpinner className={styles.loaderIcon} />
-          <p className={styles.loaderText}>Please wait...</p>
+          <p className={styles.loaderText}>Logging in...</p>
         </div>
       )}
 
@@ -90,51 +110,54 @@ export default function Managerlogin() {
               />
             </div>
 
-            <h1 className={styles.heading}>Manager Login to continue</h1>
-           
+            <h1 className={styles.heading}>Agent Login</h1>
 
-            <form className={styles.loginForm} onSubmit={handleSubmit}>
-              <div className={styles.error}>
-                {error && <h4>Invalid Credentials</h4>}
-              </div>
+            <form className={styles.loginForm} onSubmit={onSubmit}>
+              {error && <h4>Invalid Credentials</h4>}
 
-              <div className={styles.formInput}>
-                <input
-                  type="text"
-                  name="email"
-                  id="email"
-                  placeholder="E-mail Address"
-                  required
-                  className={styles.input}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+              <input
+                type="text"
+                placeholder="E-mail Address"
+                required
+                className={styles.input}
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+              />
 
-              <div className={styles.formInput}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="pass"
-                  id="pass"
-                  placeholder="Password"
-                  required
-                  className={styles.input}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                required
+                className={styles.input}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
 
-              <div className={styles.showPasswordDiv}>
+              <label>
                 <input
                   type="checkbox"
-                  id="showP"
-                  className={styles.passCheck}
-                  onClick={() => setShowPassword(!showPassword)}
-                />
-                <label htmlFor="showP">Show Password</label>
-              </div>
+                  onChange={() => setShowPassword(!showPassword)}
+                />{" "}
+                Show Password
+              </label>
 
-              <button className={styles.loginButton} type="submit">
+              <button
+                className={styles.loginButton}
+                disabled={loading}
+                type="submit"
+              >
                 Login
               </button>
+
+              <p className={styles.signupLink}>
+                Don't have an account?{" "}
+                <span
+                  className={styles.signupText}
+                  onClick={() => router.push("/agentsignup")}
+                >
+                  Sign Up
+                </span>
+              </p>
             </form>
           </div>
         </div>

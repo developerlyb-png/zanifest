@@ -1,7 +1,6 @@
 import mongoose, { Schema, models, model, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
-// Interface for type safety (optional but good practice)
 export interface IAdmin extends Document {
   userFirstName: string;
   userLastName: String;
@@ -9,6 +8,10 @@ export interface IAdmin extends Document {
   password: string;
   role: "admin" | "superadmin";
   accountStatus?: "active" | "inactive";
+
+  // ✅ ADD THIS (types)
+  loginAttempts?: number;
+  lockUntil?: number;
 }
 
 const AdminSchema = new Schema<IAdmin>(
@@ -19,7 +22,8 @@ const AdminSchema = new Schema<IAdmin>(
       trim: true,
     },
     userLastName: {
-      type: String,      trim: true,
+      type: String,
+      trim: true,
     },
     email: {
       type: String,
@@ -41,7 +45,17 @@ const AdminSchema = new Schema<IAdmin>(
       type: String,
       enum: ["active", "inactive"],
       default: "active",
-    }
+    },
+
+    // ✅ ADD HERE (schema ke andar 🔥)
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+
+    lockUntil: {
+      type: Number,
+    },
   },
   { timestamps: true }
 );

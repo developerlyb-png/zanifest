@@ -230,6 +230,7 @@ const CreateManager: React.FC<CreateManagerProps> = ({ mode = "create", initialD
   const [assignedToOptions, setAssignedToOptions] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
   //   useEffect(() => {
   //   if (mode === "edit" && initialData) {
   //     setFormData({ ...formData, ...initialData });
@@ -332,6 +333,63 @@ const CreateManager: React.FC<CreateManagerProps> = ({ mode = "create", initialD
       }));
     }
   };
+
+  const validateForm = () => {
+  const newErrors: Record<string, string> = {};
+
+  // 🔹 Name validation
+  const nameRegex = /^[A-Za-z ]+$/;
+
+  if (!formData.firstName || !nameRegex.test(formData.firstName)) {
+    newErrors.firstName = "Valid first name required";
+  }
+
+  if (!formData.lastName || !nameRegex.test(formData.lastName)) {
+    newErrors.lastName = "Valid last name required";
+  }
+
+  // 🔹 Email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!formData.email || !emailRegex.test(formData.email)) {
+    newErrors.email = "Invalid email";
+  }
+
+  // 🔹 Phone
+  if (!formData.phone || formData.phone.length !== 10) {
+    newErrors.phone = "Enter valid 10-digit phone";
+  }
+
+  // 🔹 Password (only in create)
+  if (mode === "create") {
+    if (!formData.password || formData.password.length < 6) {
+      newErrors.password = "Min 6 characters required";
+    }
+  }
+
+  // 🔹 PAN
+  const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  if (!formData.managerPanNumber || !panRegex.test(formData.managerPanNumber)) {
+    newErrors.managerPanNumber = "Invalid PAN";
+  }
+
+  // 🔹 Aadhaar
+  if (!formData.managerAadharNumber || formData.managerAadharNumber.replace(/\s/g, "").length !== 12) {
+    newErrors.managerAadharNumber = "Invalid Aadhaar";
+  }
+
+  // 🔹 IFSC
+  if (formData.ifscCode && formData.ifscCode.length !== 11) {
+    newErrors.ifscCode = "Invalid IFSC";
+  }
+
+  // 🔹 Account number
+  if (formData.accountNumber && formData.accountNumber.length < 6) {
+    newErrors.accountNumber = "Invalid account number";
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

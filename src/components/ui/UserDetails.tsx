@@ -29,7 +29,7 @@ function UserDetails() {
         </div> */}
       </div>
       <div className={styles.logosCont}>
-        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
+        <a href="https://www.instagram.com/zanifestinsurance?igsh=MXgybG9tNWJ3Yzhhbg%3D%3D" target="_blank" rel="noopener noreferrer">
         <FaInstagram className={styles.socialIcon}  />
       </a>
       <a href="https://www.twitter.com" target="_blank" rel="noopener noreferrer">

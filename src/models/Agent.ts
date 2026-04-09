@@ -97,7 +97,8 @@ twelfthMarksheetAttachment: {
 yearofpassing10th: String,
 yearofpassing12th: String,
 
-
+loginAttempts?: number,
+  lockUntil?: number,
 }
 
 /* =========================
@@ -219,6 +220,13 @@ rejectionRemark: {
       type: String,
       enum: ["active", "inactive"],
       default: "active",
+    },
+     loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+     lockUntil: {
+      type: Number,
     },
   },
   { timestamps: true }

@@ -3,6 +3,7 @@ import styles from "@/styles/components/superadminsidebar/createadmin.module.css
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import axios from "axios";
 
+import { validateAdminCreate } from "@/utils/validate";
 interface CreateAdminProps {
   initialData?: any;
   mode?: "create" | "edit"; // Optional mode prop
@@ -51,7 +52,11 @@ const CreateAdmin: React.FC<CreateAdminProps> = ({ initialData, mode }) => {
     email,
     role: isSuperAdmin ? "superadmin" : "admin",
   };
-
+  const error = validateAdminCreate(data);
+  if (error) {
+    alert(error);
+    return;
+  }
   if (password) {
     data.password = password; // only send if user typed something
   }
@@ -63,7 +68,7 @@ const CreateAdmin: React.FC<CreateAdminProps> = ({ initialData, mode }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
+      
       const result = await res.json();
 
       if (res.ok) {

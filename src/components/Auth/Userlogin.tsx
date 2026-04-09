@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react"; // ✅ ADD useEffect
 import { useRouter } from "next/router";
 
 import { IoIosArrowBack } from "react-icons/io";
@@ -14,47 +16,56 @@ export default function UserLogin() {
 
   const router = useRouter();
 
+  // ✅ 🔥 ADD THIS (already login check)
+  useEffect(() => {
+    const checkAlreadyLogin = async () => {
+      try {
+        const res = await fetch("/api/auth/check-session", {
+          credentials: "include",
+        });
+
+        if (res.status === 200) {
+          const data = await res.json();
+
+          if (data.user?.role === "user") {
+            router.replace("/dashboard");
+          }
+        }
+      } catch (err) {
+        console.log("Not logged in");
+      }
+    };
+
+    checkAlreadyLogin();
+  }, []);
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  setLoading(true);
-  setError(false);
+    event.preventDefault();
+    setLoading(true);
+    setError(false);
 
-  try {
-    const res = await fetch("/api/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch("/api/users/login", {
+        method: "POST",
+        credentials: "include", // ✅ IMPORTANT
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
-      router.push("/dashboard"); // Redirect after successful login
-    } else {
+      if (res.ok) {
+        router.replace("/dashboard"); // ✅ replace better than push
+      } else {
+        setError(true);
+      }
+    } catch (err) {
+      console.error("Login failed:", err);
       setError(true);
     }
-  } catch (err) {
-    console.error("Login failed:", err);
-    setError(true);
+
+    setLoading(false);
   }
-
-  setLoading(false);
-}
-
-
-  // async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-  //   event.preventDefault();
-  //   setLoading(true);
-
-  //   if (userName === "admin" && password === "admin@123") {
-  //     setError(false);
-  //     router.push("/dashboard");
-  //   } else {
-  //     setError(true);
-  //   }
-
-  //   setLoading(false);
-  // }
 
   return (
     <div className={styles.cont}>
@@ -76,15 +87,9 @@ export default function UserLogin() {
             />
           </div>
 
-          <h1 className={styles.heading}>
-            User Login
-          </h1>
-          <p className={styles.headingp}>
-            Access to the most powerful tool in the entire design and web
-            industry.
-          </p>
+          <h1 className={styles.heading}>User Login</h1>
 
-          <form className={styles.loginForm} onSubmit={onSubmit}>
+          <form className={styles.loginForm} onSubmit={onSubmit} autoComplete="off" >
             <div className={styles.error}>
               {error && <h4>Invalid Credentials</h4>}
             </div>
@@ -93,10 +98,10 @@ export default function UserLogin() {
               <input
                 type="email"
                 name="email"
-                id="email"
                 placeholder="E-mail Address"
                 required
                 className={styles.input}
+                  autoComplete="off" 
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -104,11 +109,11 @@ export default function UserLogin() {
             <div className={styles.formInput}>
               <input
                 type={showPassword ? "text" : "password"}
-                name="pass"
-                id="pass"
+                name="password" 
                 placeholder="Password"
                 required
                 className={styles.input}
+                autoComplete="new-password"
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
@@ -116,11 +121,9 @@ export default function UserLogin() {
             <div className={styles.showPasswordDiv}>
               <input
                 type="checkbox"
-                id="showP"
-                className={styles.passCheck}
                 onClick={() => setShowPassword(!showPassword)}
               />
-              <label htmlFor="showP">Show Password</label>
+              <label>Show Password</label>
             </div>
 
             <button
@@ -128,7 +131,7 @@ export default function UserLogin() {
               disabled={loading}
               type="submit"
             >
-              {loading ? "Loading" : "Login"}
+              {loading ? "Loading..." : "Login"}
             </button>
 
             <p className={styles.signupLink}>

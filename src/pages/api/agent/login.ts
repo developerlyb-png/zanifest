@@ -23,41 +23,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // ✅ PASSWORD CHECK (single validation)
+    // ✅ 🔒 LOCK CHECK
+    if (agent.lockUntil && agent.lockUntil > Date.now()) {
+      return res.status(403).json({
+        message: "Account locked. Try again after 15 minutes",
+      });
+    }
+
+    // ✅ PASSWORD CHECK
     const isValid =
       agent.password === password ||
       bcrypt.compareSync(password, agent.password);
 
+    // ❌ WRONG PASSWORD
     if (!isValid) {
+      agent.loginAttempts = (agent.loginAttempts || 0) + 1;
+
+      if (agent.loginAttempts >= 5) {
+        agent.lockUntil = Date.now() + 15 * 60 * 1000; // 15 min
+      }
+
+      await agent.save();
+
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    // ✅ RESET ON SUCCESS
+    agent.loginAttempts = 0;
+    agent.lockUntil = undefined;
+    await agent.save();
 
     /* =================================================
        STATUS BASED LOGIN CONTROL
     ================================================= */
 
-    // 🚫 Pending
     if (agent.status === "pending") {
       return res.status(403).json({
         message: "Your application is under review",
       });
     }
 
-    // 🚫 Reviewed (waiting for certificate)
     if (agent.status === "reviewed") {
       return res.status(403).json({
         message: "Your certificate is not generated yet",
       });
     }
 
-    // 🚫 Approved but certificate missing
     if (agent.status === "approved" && !agent.certificate2) {
       return res.status(403).json({
         message: "Certificate not generated yet. Please contact admin.",
       });
     }
 
-    // 🔁 Rejected → redirect to edit form
     if (agent.status === "rejected") {
       return res.status(200).json({
         redirect: `/createagent?loginId=${agent.loginId}&mode=edit`,
@@ -78,20 +95,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         trainingCompleted: agent.trainingCompleted,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
+      { expiresIn: "30m" } // 🔥 match admin
     );
 
-    // ⭐ Set cookie
-    res.setHeader(
-      "Set-Cookie",
-      serialize("agentToken", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24,
-      })
-    );
+    // 🔥 Absolute expiry (1 hour)
+    const absoluteExpiry = Date.now() + 60 * 60 * 1000;
+
+    // ⭐ Set cookies
+    const isProd = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "strict" as const : "lax" as const,
+  path: "/",
+};
+
+res.setHeader("Set-Cookie", [
+  serialize("agentToken", token, {
+    ...cookieOptions,
+    maxAge: 60 * 30,
+  }),
+
+  serialize("abs_exp", absoluteExpiry.toString(), {
+    ...cookieOptions,
+    maxAge: 60 * 60,
+  }),
+]);
 
     return res.status(200).json({
       success: true,
