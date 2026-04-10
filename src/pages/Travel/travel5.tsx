@@ -142,7 +142,7 @@ const PersonalDetails: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Enter full name"
-                      onInput={handleNameInput}
+                      onChange={handleNameInput}
                     />{" "}
                   </div>
                   <div className={styles.formGroup}>
@@ -169,7 +169,7 @@ const PersonalDetails: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Enter date of birth (DD-MM-YYYY)"
-                      onInput={handleDOBInput}
+                      onChange={handleDOBInput}
                     />
                   </div>
                   <div className={styles.formGroup}>
@@ -184,7 +184,7 @@ const PersonalDetails: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Enter passport number"
-                      onInput={handlePassportInput}
+                      onChange={handlePassportInput}
                     />{" "}
                   </div>
                   <div className={styles.formGroup}>
@@ -212,7 +212,7 @@ const PersonalDetails: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Enter pan number"
-                      onInput={handlePanInput}
+                      onChange={handlePanInput}
                     />{" "}
                   </div>
                   <div className={styles.formGroup}>
@@ -221,7 +221,7 @@ const PersonalDetails: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Mobile number"
-                        onInput={handleMobileInput}
+                        onChange={handleMobileInput}
                       />{" "}
                     </div>
                   </div>
@@ -240,7 +240,7 @@ const PersonalDetails: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Enter nominee full name"
-                      onInput={handleNameInput}
+                      onChange={handleNameInput}
                     />{" "}
                   </div>
                   <div className={styles.formGroup}>
@@ -353,7 +353,7 @@ const PersonalDetails: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Mobile number"
-                        onInput={handleMobileInput}
+                        onChange={handleMobileInput}
                       />
                     </div>
                   </div>

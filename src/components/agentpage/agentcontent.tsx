@@ -367,7 +367,12 @@ const updateChart = (sales: SaleRecord[]) => {
   />
 </YAxis>
 
-      <Tooltip formatter={(value: number) => `₹${value}`} />
+      <Tooltip
+  formatter={(value) => {
+    if (typeof value === "number") return `₹${value}`;
+    return `₹0`;
+  }}
+/>
 
       <Line
         type="monotone"

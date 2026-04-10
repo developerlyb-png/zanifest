@@ -6,8 +6,10 @@
     "dev": "next dev",
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
     "start": "next start -p 4000 -H 0.0.0.0",
+    "clean": "rimraf node_modules package-lock.json",
     "lint": "next lint"
   },
+  
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
@@ -39,7 +41,7 @@
     "mongoose": "^8.20.1",
     "mongoose-sequence": "^6.0.1",
     "multer": "^2.0.2",
-    "next": "^16.2.2",
+    "next": "16.2.2",
     "next-connect": "^1.0.0",
     "nodemailer": "^7.0.11",
     "pdfkit": "^0.17.2",
