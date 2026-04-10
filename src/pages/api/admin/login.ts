@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // ✅ SAFE Origin Check (non-breaking)
   const origin = req.headers.origin;
 
-  if (origin && !origin.includes("localhost") && !origin.includes("yourdomain.com")) {
+  if (origin && !origin.includes("localhost") && !origin.includes("https://www.zanifestinsurance.com")) {
     return res.status(403).json({ message: "Invalid origin" });
   }
 
