@@ -13,13 +13,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: "Method Not Allowed" });
   }
 
-  // ✅ SAFE Origin Check (non-breaking)
-  const origin = req.headers.origin;
+  // ✅ SAFE Origin Check (Production Ready)
+const origin = req.headers.origin;
 
-  if (origin && !origin.includes("localhost") && !origin.includes("https://www.zanifestinsurance.com")) {
-    return res.status(403).json({ message: "Invalid origin" });
-  }
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://zanifestinsurance.com",
+  "https://www.zanifestinsurance.com",
+];
 
+if (origin && !allowedOrigins.includes(origin)) {
+  console.warn("Blocked origin:", origin); // 🔍 debug log
+  return res.status(403).json({ message: "Invalid origin" });
+}
   // ✅ 🔥 CSRF VALIDATION (ADDED)
   const csrfCookie = req.cookies.csrfToken;
   const csrfHeader = req.headers["x-csrf-token"];
