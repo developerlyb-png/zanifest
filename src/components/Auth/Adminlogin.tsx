@@ -121,48 +121,60 @@ export default function AdminLogin() {
 
           <h1 className={styles.heading}>Admin Login to continue</h1>
 
-          <form className={styles.loginForm} onSubmit={handleSubmit}>
-            <div className={styles.error}>
-              {error && <h4>Invalid Credentials</h4>}
-            </div>
+       <form
+  className={styles.loginForm}
+  onSubmit={handleSubmit}
+  autoComplete="off" // 🔥 disable autofill
+>
+  <div className={styles.error}>
+    {error && <h4>Invalid Credentials</h4>}
+  </div>
 
-            <div className={styles.formInput}>
-              <input
-                type="text"
-                placeholder="E-mail Address"
-                required
-                className={styles.input}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+  {/* 🔥 Hidden dummy fields (browser ko confuse karne ke liye) */}
+  <input type="text" name="fake-email" style={{ display: "none" }} />
+  <input type="password" name="fake-password" style={{ display: "none" }} />
 
-            <div className={styles.formInput}>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                required
-                className={styles.input}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+  <div className={styles.formInput}>
+    <input
+      type="text"
+      name="email" // 🔥 important
+      placeholder="E-mail Address"
+      required
+      autoComplete="off" // 🔥 audit fix
+      className={styles.input}
+      onChange={(e) => setEmail(e.target.value)}
+    />
+  </div>
 
-            <div className={styles.showPasswordDiv}>
-              <input
-                type="checkbox"
-                className={styles.passCheck}
-                onClick={() => setShowPassword(!showPassword)}
-              />
-              <label>Show Password</label>
-            </div>
+  <div className={styles.formInput}>
+    <input
+      type={showPassword ? "text" : "password"}
+      name="password" // 🔥 important
+      placeholder="Password"
+      required
+      autoComplete="new-password" // 🔥 audit fix
+      className={styles.input}
+      onChange={(e) => setPassword(e.target.value)}
+    />
+  </div>
 
-            <button
-              className={styles.loginButton}
-              disabled={loading}
-              type="submit"
-            >
-              Login
-            </button>
-          </form>
+  <div className={styles.showPasswordDiv}>
+    <input
+      type="checkbox"
+      className={styles.passCheck}
+      onClick={() => setShowPassword(!showPassword)}
+    />
+    <label>Show Password</label>
+  </div>
+
+  <button
+    className={styles.loginButton}
+    disabled={loading}
+    type="submit"
+  >
+    Login
+  </button>
+</form>
         </div>
       </div>
     </div>

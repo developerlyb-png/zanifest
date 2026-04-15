@@ -6,7 +6,9 @@ export interface IUser extends Document {
   password: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
-
+  loginAttempts?: number;        // ✅ ADD
+  lockUntil?: number;            // ✅ ADD
+  accountStatus?: string;  
   aadhaarKyc?: {
     aadhaarLast4: string;
     name: string;
@@ -33,6 +35,10 @@ const UserSchema = new Schema<IUser>({
   password: { type: String },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
+    // 🔥 ADD THESE (IMPORTANT)
+  loginAttempts: { type: Number, default: 0 },
+  lockUntil: { type: Number, default: null },
+  accountStatus: { type: String, default: "active" },
 
   aadhaarKyc: { type: AadhaarSchema, default: null },
 });

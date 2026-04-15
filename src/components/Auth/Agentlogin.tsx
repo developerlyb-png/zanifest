@@ -120,53 +120,65 @@ export default function Agentlogin() {
 
             <h1 className={styles.heading}>Agent Login</h1>
 
-            <form className={styles.loginForm} onSubmit={onSubmit}>
-              {error && <h4>Invalid Credentials</h4>}
+            <form
+  className={styles.loginForm}
+  onSubmit={onSubmit}
+  autoComplete="off" // 🔥 audit fix
+>
+  {error && <h4>Invalid Credentials</h4>}
 
-              <input
-                type="text"
-                placeholder="E-mail Address"
-                required
-                className={styles.input}
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-              />
+  {/* 🔥 Hidden dummy fields (browser autofill block) */}
+  <input type="text" name="fake-email" style={{ display: "none" }} />
+  <input type="password" name="fake-password" style={{ display: "none" }} />
 
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                required
-                className={styles.input}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+  <input
+    type="text"
+    name="email" // 🔥 important for audit
+    placeholder="E-mail Address"
+    required
+    autoComplete="off" // 🔥 audit fix
+    className={styles.input}
+    value={userName}
+    onChange={(e) => setUserName(e.target.value)}
+  />
 
-              <label>
-                <input
-                  type="checkbox"
-                  onChange={() => setShowPassword(!showPassword)}
-                />{" "}
-                Show Password
-              </label>
+  <input
+    type={showPassword ? "text" : "password"}
+    name="password" // 🔥 important
+    placeholder="Password"
+    required
+    autoComplete="new-password" // 🔥 audit fix
+    className={styles.input}
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
 
-              <button
-                className={styles.loginButton}
-                disabled={loading}
-                type="submit"
-              >
-                Login
-              </button>
+  <label>
+    <input
+      type="checkbox"
+      onChange={() => setShowPassword(!showPassword)}
+    />{" "}
+    Show Password
+  </label>
 
-              <p className={styles.signupLink}>
-                Don't have an account?{" "}
-                <span
-                  className={styles.signupText}
-                  onClick={() => router.push("/agentsignup")}
-                >
-                  Sign Up
-                </span>
-              </p>
-            </form>
+  <button
+    className={styles.loginButton}
+    disabled={loading}
+    type="submit"
+  >
+    Login
+  </button>
+
+  <p className={styles.signupLink}>
+    Don't have an account?{" "}
+    <span
+      className={styles.signupText}
+      onClick={() => router.push("/agentsignup")}
+    >
+      Sign Up
+    </span>
+  </p>
+</form>
           </div>
         </div>
       </div>
