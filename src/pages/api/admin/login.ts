@@ -1,29 +1,38 @@
+// pages/api/admin/login.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import Admin from "@/models/Admin";
 import dbConnect from "@/lib/dbConnect";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
-import crypto from "crypto";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
+  // ❌ Only POST allowed
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method Not Allowed" });
   }
 
-  // ✅ Origin check
-  const origin = req.headers.origin;
+  // ✅ SAFE Origin Check (Production Ready)
+const origin = req.headers.origin;
 
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://zanifestinsurance.com",
-    "https://www.zanifestinsurance.com",
-  ];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://zanifestinsurance.com",
+  "https://www.zanifestinsurance.com",
+];
 
-  if (origin && !allowedOrigins.includes(origin)) {
-    return res.status(403).json({ message: "Invalid origin" });
+if (origin && !allowedOrigins.includes(origin)) {
+  console.warn("Blocked origin:", origin); // 🔍 debug log
+  return res.status(403).json({ message: "Invalid origin" });
+}
+  // ✅ 🔥 CSRF VALIDATION (ADDED)
+  const csrfCookie = req.cookies.csrfToken;
+  const csrfHeader = req.headers["x-csrf-token"];
+
+  if (!csrfCookie || csrfCookie !== csrfHeader) {
+    return res.status(403).json({ message: "Invalid CSRF token" });
   }
 
   const { email, password } = req.body;
@@ -43,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // 🔒 Lock check
+    // 🔒 Account lock check
     if (admin.lockUntil && admin.lockUntil > Date.now()) {
       return res.status(403).json({
         message: "Account locked. Try again after 15 minutes",
@@ -52,6 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const isMatch = await bcrypt.compare(password, admin.password);
 
+    // ❌ Wrong password
     if (!isMatch) {
       admin.loginAttempts += 1;
 
@@ -60,10 +70,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       await admin.save();
+
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // ✅ Reset
+    // ✅ Reset attempts
     admin.loginAttempts = 0;
     admin.lockUntil = undefined;
     await admin.save();
@@ -76,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // ✅ JWT (1 min test)
+    // ✅ JWT token
     const token = jwt.sign(
       {
         id: admin._id,
@@ -87,13 +98,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         accountStatus: status,
       },
       process.env.JWT_SECRET as string,
-      { expiresIn: "1m" }
+      { expiresIn: "30m" }
     );
 
-    const absoluteExpiry = Date.now() + 60 * 1000;
+    // ✅ Absolute expiry
+    const absoluteExpiry = Date.now() + 60 * 60 * 1000;
 
-    const csrfToken = crypto.randomBytes(32).toString("hex");
-
+    // ✅ Cookie options
     const isProd = process.env.NODE_ENV === "production";
 
     const cookieOptions = {
@@ -103,24 +114,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       path: "/",
     };
 
+    // ✅ Set cookies
     res.setHeader("Set-Cookie", [
       serialize("adminToken", token, {
         ...cookieOptions,
-        maxAge: 60 * 30, // 30 minutes
+        maxAge: 60 * 30,
       }),
 
       serialize("abs_exp", absoluteExpiry.toString(), {
         ...cookieOptions,
-        maxAge: 60 * 30,
+        maxAge: 60 * 60,
       }),
 
-      serialize("csrfToken", csrfToken, {
-        secure: isProd,
-        sameSite: isProd ? "strict" : "lax",
-        path: "/",
-        maxAge: 60 * 30,
-      }),
-
+      // remove other tokens
       serialize("agentToken", "", {
         ...cookieOptions,
         maxAge: 0,

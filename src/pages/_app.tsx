@@ -12,7 +12,7 @@ import SessionChecker from "@/components/SessionChecker";
 import "antd/dist/reset.css";
 import type { AppProps } from "next/app";
 import GlobalAlert from "@/components/GlobalAlert";
-import SessionTimeout from "@/components/SessionTimeout";
+
 // ---------------------------
 // Scroll to top
 // ---------------------------
@@ -102,8 +102,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
           {/* ✅ FIX: SessionChecker ONLY on protected routes */}
           {isProtectedRoute && <SessionChecker />}
-          {/* /* 🔥 ADD THIS BELOW */ }
-{isProtectedRoute && <SessionTimeout />}
+
           {loading && <Loader />}
 
           <GlobalAlert />

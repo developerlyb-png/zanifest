@@ -22,12 +22,12 @@ export default function SessionTimeout() {
       alert("Session expired");
 
       // 🔥 AUTO REFRESH + REDIRECT
-      window.location.href = "/login";
+      window.location.href = "/adminlogin";
     };
 
     const resetTimer = () => {
       clearTimeout(timeout);
-      timeout = setTimeout(logout, 60 * 1000); // 1 min
+      timeout = setTimeout(logout, 30 * 60 * 1000); // 30 min
     };
 
     const events = ["mousemove", "keypress", "click", "scroll"];
