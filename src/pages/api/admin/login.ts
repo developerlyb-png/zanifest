@@ -13,6 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: "Method Not Allowed" });
   }
 
+  
+
   // ✅ SAFE Origin Check (Production Ready)
 const origin = req.headers.origin;
 
@@ -37,14 +39,18 @@ if (origin && !allowedOrigins.includes(origin)) {
 
   const { email, password } = req.body;
 
-  if (!email || !password) {
+// ✅ CLEAN INPUTS
+const cleanEmail = email?.trim().toLowerCase();
+const cleanPassword = password?.trim();
+
+  if (!cleanEmail || !cleanPassword) {
     return res.status(400).json({ message: "Email and password are required" });
   }
 
   try {
     await dbConnect();
 
-    const admin = await Admin.findOne({ email }).select(
+    const admin = await Admin.findOne({ email: cleanEmail }).select(
       "userFirstName userLastName email role password accountStatus loginAttempts lockUntil"
     );
 
@@ -58,9 +64,30 @@ if (origin && !allowedOrigins.includes(origin)) {
         message: "Account locked. Try again after 15 minutes",
       });
     }
+    
+    
 
-    const isMatch = await bcrypt.compare(password, admin.password);
+   // 🔍 DEBUG START
+console.log("Entered:", JSON.stringify(cleanPassword));
+console.log("Hash:", admin.password);
 
+const isMatch = await bcrypt.compare(cleanPassword, admin.password);
+
+console.log("Match:", isMatch);
+// 🔍 DEBUG END
+
+// ❌ Wrong password
+if (!isMatch) {
+  admin.loginAttempts += 1;
+
+  if (admin.loginAttempts >= 5) {
+    admin.lockUntil = Date.now() + 15 * 60 * 1000;
+  }
+
+  await admin.save();
+
+  return res.status(401).json({ message: "Invalid email or password" });
+}
     // ❌ Wrong password
     if (!isMatch) {
       admin.loginAttempts += 1;

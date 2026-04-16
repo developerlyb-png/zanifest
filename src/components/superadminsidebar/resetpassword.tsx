@@ -18,78 +18,59 @@ const resetpassword = () => {
  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  // ✅ TRIM INPUTS
-  const cleanEmail = email.trim();
   const cleanCurrentPassword = currentPassword.trim();
   const cleanNewPassword = newPassword.trim();
 
-  // ✅ EMPTY CHECK
-  if (!cleanEmail || !cleanCurrentPassword || !cleanNewPassword) {
+  if (!cleanCurrentPassword || !cleanNewPassword) {
     alert("All fields are required");
     return;
   }
 
-  // ✅ EMAIL VALIDATION
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(cleanEmail)) {
-    alert("Invalid email format");
+  if (cleanNewPassword.length < 6 || cleanNewPassword.length > 50) {
+    alert("Password must be 6-50 characters");
     return;
   }
 
-  // ✅ PASSWORD VALIDATION
-  if (cleanNewPassword.length < 6) {
-    alert("New password must be at least 6 characters");
-    return;
-  }
-
-  if (cleanNewPassword.length > 50) {
-    alert("Password too long");
-    return;
-  }
-
-  // ✅ NEW ≠ CURRENT PASSWORD
   if (cleanCurrentPassword === cleanNewPassword) {
-    alert("New password must be different from current password");
+    alert("New password must be different");
     return;
   }
 
   try {
-    // 🔐 CSRF TOKEN GET
+    // ✅ CSRF
     const csrfRes = await fetch("/api/csrf-token", {
       credentials: "include",
     });
 
     const { csrfToken } = await csrfRes.json();
 
-    // 🔐 RESET PASSWORD API
+    // ✅ API CALL
     const res = await fetch("/api/admin/reset-password", {
       method: "POST",
-      credentials: "include", // ✅ IMPORTANT
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        "x-csrf-token": csrfToken, // 🔥 IMPORTANT
+        "x-csrf-token": csrfToken,
       },
       body: JSON.stringify({
-        email: cleanEmail,
         currentPassword: cleanCurrentPassword,
         newPassword: cleanNewPassword,
       }),
     });
 
-    console.log("response from reset password ->", res);
-
     const data = await res.json();
-    console.log("Reset password response:", data);
 
-    if (!res.ok) throw new Error(data.message || "Failed to reset password");
+    if (!res.ok) throw new Error(data.message);
 
     alert("Password reset successful");
+
+    // 🔥 IMPORTANT (fix login issue)
+    window.location.href = "/adminlogin";
 
   } catch (err: any) {
     alert(err.message || "Something went wrong");
   }
 };
-
   return (
     <div className={styles.container}>
       <div className={styles.card}>
