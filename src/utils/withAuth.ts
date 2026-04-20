@@ -1,8 +1,13 @@
 import jwt from "jsonwebtoken";
+import cookie from "cookie";
 
 // 🔥 middleware
 export const authMiddleware = (req: any, res: any, next: any) => {
-  const token = req.cookies.adminToken;
+  // ✅ cookies parse
+  const cookies = cookie.parse(req.headers.cookie || "");
+
+  // ✅ dono tokens check karo
+  const token = cookies.agentToken || cookies.adminToken;
 
   if (!token) {
     return res.status(401).json({ message: "No token" });
@@ -11,14 +16,16 @@ export const authMiddleware = (req: any, res: any, next: any) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
 
-    // ✅ ABSOLUTE EXPIRY CHECK
-    const absExp = req.cookies.abs_exp;
+    // ✅ absolute expiry (common)
+    const absExp = cookies.abs_exp;
 
     if (!absExp || Date.now() > Number(absExp)) {
       return res.status(401).json({ message: "Session expired" });
     }
 
+    // ✅ attach user + role
     req.user = decoded;
+
     next();
 
   } catch (err) {
@@ -26,7 +33,7 @@ export const authMiddleware = (req: any, res: any, next: any) => {
   }
 };
 
-// 🔥 THIS WAS MISSING (IMPORTANT)
+// 🔥 wrapper
 export function withAuth(handler: any) {
   return async (req: any, res: any) => {
     await new Promise((resolve, reject) => {

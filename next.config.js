@@ -3,8 +3,11 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // 🔥 ADD THIS (Banner Grabbing fix)
+  // 🔥 Banner Grabbing fix
   poweredByHeader: false,
+
+  // 🔥 BREACH Attack fix (IMPORTANT)
+  compress: false,
 
   // ✅ Clickjacking + Security Headers
   async headers() {
@@ -21,7 +24,7 @@ const nextConfig = {
             value: "frame-ancestors 'none';",
           },
 
-          // 🔥 ADD BELOW (Security Headers Missing fix)
+          // 🔥 Security Headers
           {
             key: "X-Content-Type-Options",
             value: "nosniff",

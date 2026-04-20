@@ -9,7 +9,6 @@
     "clean": "rimraf node_modules package-lock.json",
     "lint": "next lint"
   },
-  
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
@@ -75,7 +74,7 @@
     "@types/mongoose-sequence": "^3.0.11",
     "@types/multer": "^2.0.0",
     "@types/next": "^9.0.0",
-    "@types/node": "^20.19.13",
+    "@types/node": "^20.19.39",
     "@types/nodemailer": "^6.4.17",
     "@types/pdf-parse": "^1.1.5",
     "@types/pdfkit": "^0.17.4",

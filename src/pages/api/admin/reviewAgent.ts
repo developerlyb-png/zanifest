@@ -2,11 +2,13 @@ import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import Agent from "@/models/Agent";
 import { sendEmail } from "@/utils/mailSender";
-
-export default async function handler(
+import { authMiddleware } from "@/middleware/auth";
+export default function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  authMiddleware(req, res, async () => {
+    
   await dbConnect();
 
   if (req.method !== "POST") {
@@ -112,4 +114,5 @@ export default async function handler(
     console.error("Review error:", err);
     return res.status(500).json({ message: "Server error" });
   }
+  });
 }

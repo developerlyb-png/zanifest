@@ -65,29 +65,15 @@ const cleanPassword = password?.trim();
       });
     }
     
-    
-
-   // 🔍 DEBUG START
+    // 🔍 DEBUG START
 console.log("Entered:", JSON.stringify(cleanPassword));
 console.log("Hash:", admin.password);
 
 const isMatch = await bcrypt.compare(cleanPassword, admin.password);
 
 console.log("Match:", isMatch);
-// 🔍 DEBUG END
 
-// ❌ Wrong password
-if (!isMatch) {
-  admin.loginAttempts += 1;
-
-  if (admin.loginAttempts >= 5) {
-    admin.lockUntil = Date.now() + 15 * 60 * 1000;
-  }
-
-  await admin.save();
-
-  return res.status(401).json({ message: "Invalid email or password" });
-}
+    // const isMatch = await bcrypt.compare(cleanPassword, admin.password);
     // ❌ Wrong password
     if (!isMatch) {
       admin.loginAttempts += 1;

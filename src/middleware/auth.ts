@@ -1,34 +1,38 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import jwt from "jsonwebtoken";
+import dbConnect from "@/lib/dbConnect";
+import BlacklistToken from "@/models/BlacklistToken";
 
-export const authMiddleware = (
+export const authMiddleware = async (
   req: NextApiRequest,
   res: NextApiResponse,
   next: Function
 ) => {
   try {
-    // 🍪 cookies read
-    const token =
-  req.cookies.adminToken ||
-  req.cookies.agentToken ||
-  req.cookies.userToken ||
-  req.cookies.managerToken;
+    await dbConnect();
+
+    const token = req.cookies.adminToken;
     const absExp = req.cookies.abs_exp;
 
-    // ❌ token nahi hai
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // ✅ JWT verify (30 min expiry check)
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    // 🔥 BLACKLIST CHECK FIRST
+    const blacklisted = await BlacklistToken.findOne({ token });
 
-    // ✅ Absolute expiry check (1 hour)
-    if (absExp && Date.now() > Number(absExp)) {
+    if (blacklisted) {
+      return res.status(401).json({ message: "Session revoked" });
+    }
+
+    // 🔥 ABSOLUTE EXPIRY
+    if (!absExp || Date.now() > Number(absExp)) {
       return res.status(401).json({ message: "Session expired" });
     }
 
-    // ✅ user attach
+    // ✅ JWT verify
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+
     (req as any).user = decoded;
 
     next();

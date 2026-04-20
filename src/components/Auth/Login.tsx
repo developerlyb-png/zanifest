@@ -74,7 +74,7 @@ export default function Login() {
             industry.
           </p> */}
 
-          <form className={styles.loginForm} onSubmit={onSubmit}>
+          <form className={styles.loginForm} onSubmit={onSubmit} autoComplete="off">
             <div className={styles.error}>
               {error && <h4>Invalid Credentials</h4>}
             </div>
@@ -92,14 +92,15 @@ export default function Login() {
             </div>
            
             <div className={styles.formInput} style={{ position: "relative" }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={styles.input}
-                required
-              />
+               <input
+      type={showPassword ? "text" : "password"}
+      name="password" // 🔥 important
+      placeholder="Password"
+      required
+      autoComplete="new-password" // 🔥 audit fix
+      className={styles.input}
+      onChange={(e) => setPassword(e.target.value)}
+    />
               <span
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
