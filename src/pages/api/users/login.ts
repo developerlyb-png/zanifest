@@ -22,14 +22,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // ✅ password check
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    /* =================================================
+       🔒 LOCK CHECK
+    ================================================= */
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingTime = Math.ceil(
+        (user.lockUntil - Date.now()) / 60000
+      );
 
-    if (!isPasswordMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(403).json({
+        message: `Account locked. Try again after ${remainingTime} minutes`,
+      });
     }
 
-    // ✅ JWT (match admin/agent)
+    /* =================================================
+       🔑 PASSWORD CHECK
+    ================================================= */
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+    /* =================================================
+       ❌ WRONG PASSWORD HANDLING
+    ================================================= */
+    if (!isPasswordMatch) {
+      user.loginAttempts = (user.loginAttempts || 0) + 1;
+
+      if (user.loginAttempts >= 5) {
+        user.lockUntil = Date.now() + 15 * 60 * 1000;
+
+        await user.save();
+
+        return res.status(403).json({
+          message:
+            "Account locked. Try again after 15 minutes",
+        });
+      }
+
+      await user.save();
+
+      return res.status(401).json({
+        message: `Invalid credentials (${user.loginAttempts}/5 attempts)`,
+      });
+    }
+
+    /* =================================================
+       ✅ RESET ON SUCCESS
+    ================================================= */
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
+
+    /* =================================================
+       🎉 LOGIN SUCCESS
+    ================================================= */
     const token = jwt.sign(
       {
         id: user._id,
@@ -41,20 +85,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { expiresIn: "30m" }
     );
 
-    // ✅ Absolute expiry
     const absoluteExpiry = Date.now() + 60 * 60 * 1000;
 
-    // ✅ Cookie options (same as others)
     const isProd = process.env.NODE_ENV === "production";
 
     const cookieOptions = {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? "strict" as const : "lax" as const,
+      sameSite: isProd ? ("strict" as const) : ("lax" as const),
       path: "/",
     };
 
-    // ✅ Set cookies (FIXED)
     res.setHeader("Set-Cookie", [
       serialize("userToken", token, {
         ...cookieOptions,

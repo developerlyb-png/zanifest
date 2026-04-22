@@ -11,16 +11,21 @@ export const authMiddleware = async (
   try {
     await dbConnect();
 
-    const token = req.cookies.adminToken;
+    // ✅ Universal token
+    const token =
+      req.cookies.authToken ||
+      req.cookies.adminToken ||
+      req.cookies.agentToken ||
+      req.cookies.userToken;
+
     const absExp = req.cookies.abs_exp;
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // 🔥 BLACKLIST CHECK FIRST
+    // 🔥 BLACKLIST CHECK
     const blacklisted = await BlacklistToken.findOne({ token });
-
     if (blacklisted) {
       return res.status(401).json({ message: "Session revoked" });
     }
@@ -30,9 +35,10 @@ export const authMiddleware = async (
       return res.status(401).json({ message: "Session expired" });
     }
 
-    // ✅ JWT verify
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    // ✅ VERIFY TOKEN
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
 
+    // 🔥 attach user
     (req as any).user = decoded;
 
     next();

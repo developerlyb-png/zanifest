@@ -15,11 +15,12 @@ export default function Login() {
   const [email, setEmail] = useState<string>("");
   const router = useRouter();
   const { setUser } = useAuth();
-
+const [errorMessage, setErrorMessage] = useState<string>("");
   const onSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
   setError(false);
+  setErrorMessage("");
 
   try {
     const res = await fetch("/api/users/login", {
@@ -36,16 +37,15 @@ export default function Login() {
       router.push("/dashboard");
     } else {
       setError(true);
-      console.error("Login error:", data.message);
+      setErrorMessage(data.message || "Invalid credentials");
     }
   } catch (err) {
     setError(true);
-    console.error("Unexpected error:", err);
+    setErrorMessage("Something went wrong");
   }
 
   setLoading(false);
 };
-
   return (
     <div className={styles.cont}>
       <div className={styles.left}>
@@ -76,7 +76,11 @@ export default function Login() {
 
           <form className={styles.loginForm} onSubmit={onSubmit} autoComplete="off">
             <div className={styles.error}>
-              {error && <h4>Invalid Credentials</h4>}
+              {error && (
+  <h4 style={{ color: "red" }}>
+    {errorMessage}
+  </h4>
+)}
             </div>
 
             <div className={styles.formInput}>
@@ -117,11 +121,11 @@ export default function Login() {
             </div>
           
           
-              <button
-              className={styles.loginButton}
-              disabled={loading}
-              type="submit"
-            >
+             <button
+  className={styles.loginButton}
+  disabled={loading || errorMessage.includes("locked")}
+  type="submit"
+>
               {loading ? "Loading" : "Login"}
             </button>
 
