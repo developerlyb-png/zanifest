@@ -61,6 +61,29 @@ function Footer() {
             solutions to dedicated claim assistance team, we offer you a
             complete peace of mind.
           </div>
+<br />
+
+          {/* ✅ Structured Company Info (No layout change) */}
+          <div className={styles.desc}>
+            <strong>Zanifest Insurance Broker Private Limited</strong><br />
+            <strong>CIN :</strong> U66220PB2025PTC063559<br />
+            <strong>IRDAI Type :</strong> Insurance Broker Direct (General)<br />
+            <strong>Registration No :</strong> 1119<br />
+            <strong>Registration Code :</strong> IRDAI/INT/BRK/DB1242/2025<br />
+            <strong>Valid Till :</strong> 27/11/2028
+          </div>
+
+          <div className={styles.desc}>
+            <strong>Customer Care Email :</strong>{" "}
+            <a
+  href="mailto:support@zanifestinsurance.com"
+  style={{ color: "orange" }}
+>
+  support@zanifestinsurance.com
+</a>
+            <br />
+            <strong>Tel  :</strong> 01762-496934
+          </div>
 
           <div className={styles.icons}>
             <FaLinkedin size={40} />
