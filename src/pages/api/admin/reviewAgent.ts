@@ -3,12 +3,14 @@ import dbConnect from "@/lib/dbConnect";
 import Agent from "@/models/Agent";
 import { sendEmail } from "@/utils/mailSender";
 import { authMiddleware } from "@/middleware/auth";
-export default function handler(
+
+export default async function handler(   // ✅ FIX 1: async added
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  authMiddleware(req, res, async () => {
-    
+  const isAuth = await authMiddleware(req, res); // ✅ now valid
+  if (!isAuth) return;
+
   await dbConnect();
 
   if (req.method !== "POST") {
@@ -56,14 +58,12 @@ export default function handler(
       });
     }
 
-    
     /* =================================================
-       REJECT APPLICATION  ✅ FIXED
+       REJECT APPLICATION
     ================================================= */
     if (action === "reject") {
       agent.status = "rejected";
 
-      // 🔥 FIX: convert verification object → rejectedFields[]
       const rejectedFields: string[] = [];
 
       if (verification?.panStatus === "rejected") {
@@ -110,9 +110,9 @@ export default function handler(
     }
 
     return res.status(400).json({ message: "Invalid action" });
+
   } catch (err) {
     console.error("Review error:", err);
     return res.status(500).json({ message: "Server error" });
   }
-  });
 }

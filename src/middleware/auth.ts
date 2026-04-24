@@ -3,46 +3,60 @@ import jwt from "jsonwebtoken";
 import dbConnect from "@/lib/dbConnect";
 import BlacklistToken from "@/models/BlacklistToken";
 
+interface DecodedUser {
+  id: string;
+  email: string;
+  role: string;
+  [key: string]: any;
+}
+
 export const authMiddleware = async (
   req: NextApiRequest,
-  res: NextApiResponse,
-  next: Function
-) => {
+  res: NextApiResponse
+): Promise<boolean> => {
   try {
+    /* ================= DB CONNECT ================= */
     await dbConnect();
 
-    // ✅ Universal token
-    const token =
-      req.cookies.authToken ||
-      req.cookies.adminToken ||
-      req.cookies.agentToken ||
-      req.cookies.userToken;
-
+    /* ================= GET COOKIES ================= */
+    const token = req.cookies.adminToken;
     const absExp = req.cookies.abs_exp;
 
+    /* ================= TOKEN CHECK ================= */
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: "Unauthorized: No token" });
+      return false;
     }
 
-    // 🔥 BLACKLIST CHECK
+    /* ================= BLACKLIST CHECK ================= */
     const blacklisted = await BlacklistToken.findOne({ token });
+
     if (blacklisted) {
-      return res.status(401).json({ message: "Session revoked" });
+      res.status(401).json({ message: "Session revoked. Please login again." });
+      return false;
     }
 
-    // 🔥 ABSOLUTE EXPIRY
+    /* ================= ABSOLUTE EXPIRY ================= */
     if (!absExp || Date.now() > Number(absExp)) {
-      return res.status(401).json({ message: "Session expired" });
+      res.status(401).json({ message: "Session expired. Please login again." });
+      return false;
     }
 
-    // ✅ VERIFY TOKEN
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    /* ================= JWT VERIFY ================= */
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedUser;
 
-    // 🔥 attach user
+    /* ================= ATTACH USER ================= */
     (req as any).user = decoded;
 
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    return true;
+
+  } catch (error) {
+    console.error("Auth Middleware Error:", error);
+
+    res.status(401).json({
+      message: "Invalid or expired token",
+    });
+
+    return false;
   }
 };

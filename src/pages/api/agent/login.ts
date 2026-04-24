@@ -14,7 +14,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { email, password } = req.body;
 
   try {
-
     await dbConnect();
 
     const agent = await Agent.findOne({ email });
@@ -23,14 +22,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // ✅ 🔒 LOCK CHECK
+    // 🔒 LOCK CHECK
     if (agent.lockUntil && agent.lockUntil > Date.now()) {
       return res.status(403).json({
         message: "Account locked. Try again after 15 minutes",
       });
     }
 
-    // ✅ PASSWORD CHECK
+    // ✅ PASSWORD CHECK (PLAIN + HASH SUPPORT)
     const isValid =
       agent.password === password ||
       bcrypt.compareSync(password, agent.password);
@@ -40,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       agent.loginAttempts = (agent.loginAttempts || 0) + 1;
 
       if (agent.loginAttempts >= 5) {
-        agent.lockUntil = Date.now() + 15 * 60 * 1000; // 15 min
+        agent.lockUntil = Date.now() + 15 * 60 * 1000;
       }
 
       await agent.save();
@@ -95,38 +94,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         trainingCompleted: agent.trainingCompleted,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "30m" } // 🔥 match admin
+      { expiresIn: "30m" }
     );
 
     // 🔥 Absolute expiry (1 hour)
     const absoluteExpiry = Date.now() + 60 * 60 * 1000;
 
-    // ⭐ Set cookies
     const isProd = process.env.NODE_ENV === "production";
 
-const cookieOptions = {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "strict" as const : "lax" as const,
-  path: "/",
-};
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "strict" as const : "lax" as const,
+      path: "/",
+    };
 
-res.setHeader("Set-Cookie", [
-  serialize("agentToken", token, {
-    ...cookieOptions,
-    maxAge: 60 * 30,
-  }),
+    // ✅ SET COOKIES (FIXED VERSION)
+    res.setHeader("Set-Cookie", [
+      serialize("agentToken", token, {
+        ...cookieOptions,
+        maxAge: 60 * 30,
+      }),
 
-  serialize("abs_exp", absoluteExpiry.toString(), {
-    ...cookieOptions,
-    maxAge: 60 * 60,
-  }),
-]);
+      serialize("abs_exp", absoluteExpiry.toString(), {
+        ...cookieOptions,
+        maxAge: 60 * 60,
+      }),
+
+      // 🔥 REMOVE OTHER TOKENS (IMPORTANT)
+      serialize("adminToken", "", {
+        ...cookieOptions,
+        maxAge: 0,
+      }),
+
+      serialize("userToken", "", {
+        ...cookieOptions,
+        maxAge: 0,
+      }),
+    ]);
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
       agent: {
         name: `${agent.firstName} ${agent.lastName}`,
         email: agent.email,
@@ -134,7 +143,6 @@ res.setHeader("Set-Cookie", [
     });
 
   } catch (err) {
-
     console.error("Login error:", err);
 
     return res.status(500).json({

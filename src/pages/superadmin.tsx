@@ -93,6 +93,49 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  useEffect(() => {
+  let timer: NodeJS.Timeout;
+
+  const logoutUser = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      localStorage.removeItem("adminName");
+
+      window.location.href = "/adminlogin";
+    } catch (error) {
+      console.error("Auto logout failed:", error);
+    }
+  };
+
+  const resetTimer = () => {
+    if (timer) clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      logoutUser();
+    }, 30 * 60 * 1000); // ✅ 30 min
+  };
+
+  // 👇 activity detect
+  window.addEventListener("mousemove", resetTimer);
+  window.addEventListener("keydown", resetTimer);
+  window.addEventListener("click", resetTimer);
+  window.addEventListener("scroll", resetTimer);
+
+  resetTimer();
+
+  return () => {
+    if (timer) clearTimeout(timer);
+
+    window.removeEventListener("mousemove", resetTimer);
+    window.removeEventListener("keydown", resetTimer);
+    window.removeEventListener("click", resetTimer);
+    window.removeEventListener("scroll", resetTimer);
+  };
+}, []);
   // Admin Count
   useEffect(() => {
     const fetchAdminCount = async () => {

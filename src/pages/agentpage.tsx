@@ -58,6 +58,51 @@ const AgentDashboard = () => {
     }
   }, [activeSection, router]);
 
+  useEffect(() => {
+  let timer: NodeJS.Timeout;
+
+  const logoutUser = async () => {
+    try {
+      await axios.post("/api/agent/logout", {}, { withCredentials: true });
+
+      // same cleanup
+      localStorage.removeItem("agentName");
+      localStorage.removeItem("agentTestPassed");
+      localStorage.removeItem("training_currentVideo");
+      localStorage.removeItem("training_completed");
+      localStorage.removeItem("training_testStarted");
+
+      router.replace("/agentlogin"); // ✅ FIX
+    } catch (error) {
+      console.error("Auto logout failed:", error);
+    }
+  };
+
+  const resetTimer = () => {
+    if (timer) clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      logoutUser();
+    }, 30 * 60 * 1000);
+  };
+
+  // 👇 activity tracking (improved)
+  window.addEventListener("mousemove", resetTimer);
+  window.addEventListener("keydown", resetTimer);
+  window.addEventListener("click", resetTimer);
+  window.addEventListener("scroll", resetTimer); // ✅ ADD THIS
+
+  resetTimer();
+
+  return () => {
+    if (timer) clearTimeout(timer);
+
+    window.removeEventListener("mousemove", resetTimer);
+    window.removeEventListener("keydown", resetTimer);
+    window.removeEventListener("click", resetTimer);
+    window.removeEventListener("scroll", resetTimer);
+  };
+}, [router]);
   /* ---------------------------------------
      LOGOUT (COOKIE BASED)
   --------------------------------------- */

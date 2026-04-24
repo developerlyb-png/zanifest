@@ -1,37 +1,30 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import dbConnect from '@/lib/dbConnect';
 import Admin from '@/models/Admin';
+import { authMiddleware } from "@/middleware/auth";
 
-// ✅ Validation function
 function validateInput(data: any) {
   const errors: string[] = [];
 
-  // First Name
   if (!data.userFirstName || !/^[A-Za-z\s]+$/.test(data.userFirstName)) {
     errors.push("Invalid first name");
   }
 
-  // Last Name (optional)
   if (data.userLastName && !/^[A-Za-z\s]+$/.test(data.userLastName)) {
     errors.push("Invalid last name");
   }
 
-  // Email
   if (!data.email || !/^\S+@\S+\.\S+$/.test(data.email)) {
     errors.push("Invalid email");
   }
 
-  // 🔥 Strong Password (UPDATED)
   if (
     !data.password ||
     !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$/.test(data.password)
   ) {
-    errors.push(
-      "Password must contain letter, number, symbol and be at least 6 characters"
-    );
+    errors.push("Password must contain letter, number, symbol and be at least 6 characters");
   }
 
-  // Role
   if (!["admin", "superadmin"].includes(data.role)) {
     errors.push("Invalid role");
   }
@@ -41,13 +34,16 @@ function validateInput(data: any) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
+  // 🔥 MIDDLEWARE ADD (MOST IMPORTANT)
+  const isAuth = await authMiddleware(req, res);
+  if (!isAuth) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   const { userFirstName, userLastName, email, password, role } = req.body;
 
-  // ✅ Validation check
   const errors = validateInput(req.body);
 
   if (errors.length > 0) {
@@ -69,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userFirstName,
       userLastName: userLastName || "",
       email,
-      password, // ⚠️ hashing next step
+      password,
       role
     });
 

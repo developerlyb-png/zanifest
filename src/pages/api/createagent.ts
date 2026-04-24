@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import Agent from "@/models/Agent";
+import { agentAuth } from "@/middleware/agentAuth";
 import AgentLogin from "@/models/AgentLogin";
 
 export const config = {
@@ -14,6 +15,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const isAuth = await agentAuth(req, res);
+if (!isAuth) return;
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
