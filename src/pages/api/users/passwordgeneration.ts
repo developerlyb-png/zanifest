@@ -2,12 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
-
+import { userAuth } from '@/utils/userAuth';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
-
+const isAuth = await userAuth(req, res);
+  if (!isAuth) return;
   const { token, password } = req.body;
 
   if (!token || !password) {

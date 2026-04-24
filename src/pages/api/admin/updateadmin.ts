@@ -3,8 +3,11 @@ import dbConnect from "@/lib/dbConnect";
 import Agent from "@/models/Agent";
 import jwt from "jsonwebtoken";
 import { parse } from "cookie";
-
+import { authMiddleware } from "@/middleware/auth"; // ✅ use common auth
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+
+  const isAuth = await authMiddleware(req, res);
+  if (!isAuth) return;
 
   await dbConnect();
 

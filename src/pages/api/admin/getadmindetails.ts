@@ -2,11 +2,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import Admin from "@/models/Admin";
 import { withAuth } from "@/utils/withAuth"; // ✅ use common auth
-
+import { authMiddleware } from "@/middleware/auth"; // ✅ use common auth
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     await dbConnect();
-
+const isAuth = await authMiddleware(req, res);
+  if (!isAuth) return;
     // ✅ user from middleware
     const user = (req as any).user;
 

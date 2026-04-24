@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import mongoose from "mongoose";
 import Lead from "@/models/lead";
 import { verifyToken } from "@/utils/verifyToken";
-
+import { agentAuth } from "@/middleware/agentAuth";
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 async function connectDB() {
@@ -15,6 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const token = req.cookies.agentToken;
   if (!token) return res.status(401).json({ success: false });
+
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
 
   try {
     await verifyToken(token);

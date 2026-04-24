@@ -1,13 +1,14 @@
 import {NextApiRequest, NextApiResponse} from 'next';
 import dbConnect from '@/lib/dbConnect';
 import Agent from '@/models/Agent';
-
+import { agentAuth } from "@/middleware/agentAuth";
 export default async function handler(req: NextApiRequest, res: NextApiResponse){
 
     if(req.method!=='DELETE'){
         return res.status(405).json({message: 'invalid method call'});
     }
-
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
     const { id} = req.query;
     console.log("the id of teh agent to be deleted : ", id);
 

@@ -5,7 +5,7 @@ import Sale from "@/models/sales/sale";
 import Manager from "@/models/Manager";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import ReassignmentHistory from "@/models/ReassignmentHistory";
-
+import { agentAuth } from "@/middleware/agentAuth";
 interface CustomJwtPayload extends JwtPayload {
   id: string;
   role: string;
@@ -16,6 +16,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "GET") {
     return res.status(405).json({ success: false, message: "Method Not Allowed" });
   }
+
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
+
 
   try {
     await dbConnect();

@@ -6,11 +6,15 @@ import {parse} from 'cookie';
 import cookie from 'cookie';
 import bcrypt from "bcryptjs";
 import Agent from '@/models/Agent';
-
+import { agentAuth } from "@/middleware/agentAuth";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "PATCH") {
     return res.status(405).json({ success: false, message: "Method not allowed" });
   }
+
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
+
 
   try {
     await dbConnect();

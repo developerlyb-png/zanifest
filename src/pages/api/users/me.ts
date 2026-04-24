@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     // ✅ FIXED COOKIE NAME
-    const token = req.cookies.adminToken;
+    const token = req.cookies.userToken;
 
     if (!token) {
       return res.status(401).json({ message: "Not logged in" });
@@ -13,7 +13,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 
    const userData = {
-  userFirstName: decoded.userFirstName || "", // ✅ IMPORTANT
+  name: decoded.userName || "", // 🔥 IMPORTANT FIX
   email: decoded.email || "",
   role: decoded.role || "",
 };

@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import jwt from "jsonwebtoken";
 import dbConnect from "@/lib/dbConnect";
 import Agent from "@/models/Agent";
-
+import { agentAuth } from "@/middleware/agentAuth";
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -11,7 +11,8 @@ export default async function handler(
   if (req.method !== "GET") return res.status(405).end();
 
   await dbConnect();
-
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
   try {
 
     const token = req.cookies.agentToken;

@@ -4,6 +4,7 @@ import Agent from "@/models/Agent";
 import Manager from "@/models/Manager";
 import Sale from "@/models/sales/sale";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { agentAuth } from "@/middleware/agentAuth"; // ✅ ADD ONLY
 
 interface CustomJwtPayload extends JwtPayload {
   id: string;
@@ -12,6 +13,11 @@ interface CustomJwtPayload extends JwtPayload {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+
+  // 🔐 ADD THIS (DO NOT REMOVE OLD CODE)
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
+
   if (req.method !== "POST") {
     return res.status(405).json({ success: false, message: "Method Not Allowed" });
   }
@@ -19,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await dbConnect();
 
-    const token = req.cookies.agentToken; // ✅ COOKIE
+    const token = req.cookies.agentToken; // ✅ EXISTING (UNCHANGED)
     if (!token) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
@@ -65,6 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         underCurrentDM: agent.currentDMSales,
       },
     });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, message: "Internal Server Error" });

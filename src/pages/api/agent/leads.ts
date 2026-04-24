@@ -7,7 +7,7 @@ import HomeInsurance from "@/models/Homeinsurance";
 import OfficePackagePolicy from "@/models/OfficePackagePolicy";
 import Lead from "@/models/lead";
 import { verifyToken } from "@/utils/verifyToken";
-
+import { agentAuth } from "@/middleware/agentAuth";
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 async function connectDB() {
@@ -22,6 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!token) {
     return res.status(401).json({ success: false });
   }
+
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
 
   try {
     const decoded: any = await verifyToken(token);

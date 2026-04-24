@@ -3,12 +3,15 @@ import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User'; 
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-
+import { authMiddleware } from "@/middleware/auth";
+import { userAuth } from "@/utils/userAuth";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
+  const isAuth = await userAuth(req, res);
+    if (!isAuth) return;
   const { userName, email } = req.body;
 
   try {

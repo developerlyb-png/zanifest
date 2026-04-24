@@ -3,12 +3,14 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dbConnect from "@/lib/dbConnect";
 import Admin from "@/models/Admin";
-
+import { authMiddleware } from "@/middleware/auth";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
+  const isAuth = await authMiddleware(req, res);
+    if (!isAuth) return;
   try {
     await dbConnect();
 

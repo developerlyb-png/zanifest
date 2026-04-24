@@ -1,12 +1,14 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
-
+import jwt from "jsonwebtoken";
+import { userAuth } from "@/utils/userAuth";
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-
+const isAuth = await userAuth(req, res);
+  if (!isAuth) return;
   await dbConnect();
 console.log("Connected to database- for getting users");
 

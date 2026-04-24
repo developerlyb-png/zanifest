@@ -1,8 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { withAuth } from "@/utils/withAuth";
-
+import { authMiddleware } from "@/middleware/auth"; // ✅ use common auth
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
+    const isAuth = await authMiddleware(req, res);
+    if (!isAuth) return;
+
     // ✅ user from middleware (already verified)
     const user = (req as any).user;
 

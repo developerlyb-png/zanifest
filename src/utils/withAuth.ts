@@ -7,7 +7,10 @@ export const authMiddleware = (req: any, res: any, next: any) => {
   const cookies = cookie.parse(req.headers.cookie || "");
 
   // ✅ dono tokens check karo
-  const token = cookies.agentToken || cookies.adminToken;
+  const token =
+  cookies.userToken ||   // 🔥 ADD THIS
+  cookies.agentToken ||
+  cookies.adminToken;
 
   if (!token) {
     return res.status(401).json({ message: "No token" });

@@ -2,12 +2,13 @@
 import Agent from "@/models/Agent";
 import jwt from "jsonwebtoken";
 import { NextApiRequest, NextApiResponse } from "next";
-
+import { agentAuth } from "@/middleware/agentAuth";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ message: "Method not allowed" });
   }
-
+  const isAuth = await agentAuth(req, res);
+  if (!isAuth) return;
   try {
     await dbConnect();
 

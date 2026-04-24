@@ -2,11 +2,13 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import Admin from "@/models/Admin";
 import { withAuth } from "@/utils/withAuth"; // ✅ ADD THIS
-
+import { authMiddleware } from "@/middleware/auth"; // ✅ ADD THIS
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "DELETE") {
     return res.status(405).json({ message: "This method is not allowed!" });
   }
+  const isAuth = await authMiddleware(req, res);
+    if (!isAuth) return;
 
   const { id } = req.query;
 

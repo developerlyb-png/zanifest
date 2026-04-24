@@ -5,11 +5,14 @@ import jwt from "jsonwebtoken";  // if you’re using JWT auth
 import {parse} from 'cookie';
 import cookie from 'cookie';
 import bcrypt from "bcryptjs";
-
+import { authMiddleware } from "@/middleware/auth"; // ✅ use common auth
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "PATCH") {
     return res.status(405).json({ success: false, message: "Method not allowed" });
   }
+
+  const isAuth = await authMiddleware(req, res);
+  if (!isAuth) return;
 
   try {
     await dbConnect();
