@@ -67,7 +67,7 @@ function Footer() {
           <div className={styles.desc}>
             <strong>Zanifest Insurance Broker Private Limited</strong><br />
             <strong>CIN :</strong> U66220PB2025PTC063559<br />
-            <strong>IRDAI Type :</strong> Insurance Broker Direct (General)<br />
+            <strong>License Category :</strong> Insurance Broker Direct (General)<br />
             <strong>Registration No :</strong> 1119<br />
             <strong>Registration Code :</strong> IRDAI/INT/BRK/DB1242/2025<br />
             <strong>Valid Till :</strong> 27/11/2028
