@@ -15,8 +15,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const isAuth = await agentAuth(req, res);
-if (!isAuth) return;
+  
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
