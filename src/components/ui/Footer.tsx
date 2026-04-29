@@ -95,7 +95,7 @@ function Footer() {
     target="_blank"
     rel="noopener noreferrer"
   >
-    <FaInstagram size={40} />
+    <FaInstagram size={40} color="#fff" />
   </a>
 
   {/* YouTube */}
@@ -104,7 +104,7 @@ function Footer() {
     target="_blank"
     rel="noopener noreferrer"
   >
-    <FaYoutube size={40} />
+    <FaYoutube size={40} color="#fff" />
   </a>
 
   {/* LinkedIn */}
@@ -113,17 +113,17 @@ function Footer() {
     target="_blank"
     rel="noopener noreferrer"
   >
-    <FaLinkedin size={40} />
+    <FaLinkedin size={40} color="#fff"/>
   </a>
 
   {/* Facebook (link mile to yaha daal dena) */}
   <a href="https://www.facebook.com/people/Zanifest-Insurance/61587951775182/?rdid=ugTU8cAvrghxwvyw&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18a9DHo2th%2F" target="_blank" rel="noopener noreferrer">
-    <BsFacebook size={40} />
+    <BsFacebook size={40} color="#fff" />
   </a>
 
   {/* Twitter / X */}
   <a href="#" target="_blank" rel="noopener noreferrer">
-    <FaXTwitter size={40} />
+    <FaXTwitter size={40} color="#fff" />
   </a>
 
 </div>
