@@ -122,7 +122,7 @@ function Footer() {
   </a>
 
   {/* Twitter / X */}
-  <a href="https://x.com/zanifest" target="_blank" rel="noopener noreferrer">
+  <a href="#" target="_blank" rel="noopener noreferrer">
     <FaXTwitter size={40} />
   </a>
 
