@@ -121,10 +121,10 @@ function Footer() {
     <BsFacebook size={30} color="#fff" />
   </a>
 
-  /* {/* Twitter / X */}
+ {/* Twitter / X */}
   <a href="#" target="_blank" rel="noopener noreferrer">
     <FaXTwitter size={30} color="#fff" />
-  </a> */
+  </a>
 
 </div>
         </div>
